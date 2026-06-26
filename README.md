@@ -30,3 +30,7 @@ Keine Persistenz — die Gruppe wird nicht gespeichert und geht beim Neuladen ve
 ## Hintergrund
 
 In einem reibungsarmen Umfeld (gerader Seilverlauf in der Halle) liegt der optimale Gewichtsunterschied in einer Seilschaft bei ± 5 kg. Mit dickerem Seil fallen die Kompensationswerte bei den meisten Geräten deutlich höher aus als mit dünnem Seil.
+
+# Beispiel
+
+![Screenshot.png](docs/Screenshot.png)
