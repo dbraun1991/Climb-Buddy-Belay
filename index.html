@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sicherungscheck</title>
+  <style>
+    :root {
+      --ground:   #F0F2F5;
+      --surface:  #FFFFFF;
+      --text:     #141820;
+      --muted:    #6B7280;
+      --accent:   #1B4FD8;
+      --accent-h: #1540B0;
+      --heat:     #E87820;
+      --border:   #D1D5DB;
+      --border-s: #9CA3AF;
+
+      --ok:       #1A7A3C;
+      --warn:     #B87800;
+      --crit:     #C24800;
+      --danger:   #B01A1A;
+      --self-bg:  #E5E7EB;
+      --self-fg:  #9CA3AF;
+
+      --sidebar:  272px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--ground);
+      color: var(--text);
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── Header ─────────────────────────────────── */
+    .hdr {
+      background: var(--text);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    .hdr-logo { flex-shrink: 0; }
+    .hdr-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--heat);
+      font-family: 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+    }
+    .hdr-sub {
+      font-size: 11px;
+      color: #9AA4B4;
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── Layout ─────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar) 1fr;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ─── Sidebar ────────────────────────────────── */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      padding: 20px 16px;
+      overflow-y: auto;
+    }
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    /* Form */
+    .form-stack { display: flex; flex-direction: column; gap: 8px; }
+    .field { display: flex; flex-direction: column; gap: 3px; }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .field-input {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 3px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--ground);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.1s;
+    }
+    .field-input:focus { border-color: var(--accent); background: var(--surface); }
+    .field-input:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+    .btn-add {
+      padding: 9px 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.1s;
+    }
+    .btn-add:hover { background: var(--accent-h); }
+    .btn-add:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .form-err {
+      font-size: 12px;
+      color: var(--danger);
+      background: #FEE2E2;
+      padding: 6px 8px;
+      border-radius: 3px;
+      display: none;
+    }
+    .form-err.on { display: block; }
+
+    /* Person list */
+    .plist { display: flex; flex-direction: column; gap: 5px; }
+    .pitem {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 7px 8px;
+      background: var(--ground);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+    }
+    .pinfo { display: flex; flex-direction: column; min-width: 0; }
+    .pname { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pkg {
+      font-family: ui-monospace, 'Cascadia Code', Menlo, monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .btn-del {
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      color: var(--border-s);
+      cursor: pointer;
+      font-size: 17px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      line-height: 1;
+      transition: color 0.1s, background 0.1s;
+    }
+    .btn-del:hover { color: var(--danger); background: #FEE2E2; }
+    .btn-del:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
+    .plist-empty { font-size: 12px; color: var(--muted); font-style: italic; }
+
+    /* Legend */
+    .legend-wrap { margin-top: auto; padding-top: 18px; border-top: 1px solid var(--border); }
+    .lgd-list { display: flex; flex-direction: column; gap: 7px; }
+    .lgd-row { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--muted); }
+    .lgd-chip {
+      width: 30px;
+      height: 20px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    /* ─── Main ───────────────────────────────────── */
+    .main {
+      padding: 28px 32px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Empty state */
+    .empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+    }
+    .empty-icon { opacity: 0.14; display: block; margin-bottom: 4px; }
+    .empty-h { font-size: 17px; font-weight: 700; color: var(--muted); }
+    .empty-p { font-size: 13px; color: var(--muted); max-width: 230px; }
+
+    /* Matrix */
+    .matrix-wrap { display: flex; flex-direction: column; gap: 14px; }
+    .matrix-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .matrix-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .matrix-hint { font-size: 11px; color: var(--muted); }
+    .table-scroll { overflow-x: auto; }
+
+    /* Summary sentences */
+    .summary {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 12px 14px;
+      background: var(--surface);
+      border-left: 3px solid var(--border-s);
+      border-radius: 0 3px 3px 0;
+    }
+    .summary-line {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .summary-line strong { font-weight: 700; }
+    .summary-line .rating-ok     { color: var(--ok);     font-weight: 700; }
+    .summary-line .rating-warn   { color: var(--warn);   font-weight: 700; }
+    .summary-line .rating-crit   { color: var(--crit);   font-weight: 700; }
+    .summary-line .rating-danger { color: var(--danger); font-weight: 700; }
+
+    /* Research note */
+    .research-note {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #EFF6FF;
+      border-left: 3px solid var(--accent);
+      border-radius: 0 3px 3px 0;
+      font-size: 13px;
+      color: #1E3A6E;
+      line-height: 1.45;
+    }
+    .research-note-line2 {
+      display: block;
+      margin-top: 5px;
+    }
+    .research-note-icon {
+      font-size: 13px;
+      flex-shrink: 0;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Gear hint */
+    .gear-hint {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 10px 14px;
+      background: #FEF3C7;
+      border-left: 3px solid var(--warn);
+      border-radius: 0 3px 3px 0;
+      font-size: 13px;
+      color: #6B4A00;
+      line-height: 1.45;
+    }
+    .gear-hint-icon {
+      font-size: 13px;
+      flex-shrink: 0;
+      color: var(--warn);
+    }
+    .gear-hint-devices {
+      display: block;
+      margin-top: 5px;
+    }
+
+    /* ─── Matrix table ───────────────────────────── */
+    .mtable {
+      border-collapse: separate;
+      border-spacing: 4px;
+    }
+
+    /* Column headers */
+    .col-hdr {
+      text-align: center;
+      padding: 3px 8px 5px;
+      vertical-align: bottom;
+    }
+    .col-hdr-name {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .col-hdr-kg {
+      display: block;
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Row headers */
+    td.row-hdr {
+      padding: 3px 10px 3px 0;
+      vertical-align: middle;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .row-hdr-name { display: block; font-size: 13px; font-weight: 600; }
+    .row-hdr-kg {
+      display: block;
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* ─── Cells — load-plate aesthetic ──────────── */
+    /* Each cell is styled as a small rating plate, like those    */
+    /* stamped on carabiners and belay devices. Bold flat color,  */
+    /* monospaced weight delta — no softness, no decoration.      */
+    .mcell {
+      width: 78px;
+      height: 54px;
+      border-radius: 2px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .mcell-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 2px;
+    }
+    .mcell-sym {
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .mcell-delta {
+      font-family: ui-monospace, Menlo, monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      opacity: 0.82;
+      line-height: 1;
+    }
+
+    .mcell-self { background: var(--self-bg); color: var(--self-fg); }
+
+    .mcell-ok {
+      background: var(--ok);
+      color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.18);
+    }
+    .mcell-warn {
+      background: var(--warn);
+      color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.18);
+    }
+    .mcell-crit {
+      background: var(--crit);
+      color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.18);
+    }
+    .mcell-danger {
+      background: var(--danger);
+      color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.18);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <canvas class="hdr-logo" id="logo-canvas" width="30" height="30" aria-hidden="true"></canvas>
+  <div>
+    <div class="hdr-title">Sicherungscheck</div>
+    <div class="hdr-sub">Sicherungsmatrix für Klettergruppen · Lead</div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div>
+      <div class="eyebrow">Person hinzufügen</div>
+      <form id="add-form" class="form-stack" onsubmit="addPerson(event)" novalidate>
+        <div class="field">
+          <label class="field-label" for="inp-name">Name</label>
+          <input type="text" id="inp-name" class="field-input" placeholder="z. B. Anna" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="inp-kg">Gewicht (kg)</label>
+          <input type="number" id="inp-kg" class="field-input" placeholder="70" min="30" max="200" step="1" />
+        </div>
+        <div class="form-err" id="form-err" role="alert"></div>
+        <button type="submit" class="btn-add">In Gruppe aufnehmen</button>
+      </form>
+    </div>
+
+    <div>
+      <div class="eyebrow" id="group-eyebrow">Gruppe (0 Personen)</div>
+      <div class="plist" id="plist">
+        <div class="plist-empty">Noch niemand dabei.</div>
+      </div>
+    </div>
+
+    <div class="legend-wrap">
+      <div class="eyebrow">Legende</div>
+      <div class="lgd-list">
+        <div class="lgd-row">
+          <div class="lgd-chip" style="background: var(--ok);">✓</div>
+          <span>bis 10 kg leichter — sicher</span>
+        </div>
+        <div class="lgd-row">
+          <div class="lgd-chip" style="background: var(--warn);">!</div>
+          <span>10 – 15 kg leichter — grenzwertig</span>
+        </div>
+        <div class="lgd-row">
+          <div class="lgd-chip" style="background: var(--crit);">⚠</div>
+          <span>15 – 20 kg leichter — kritisch</span>
+        </div>
+        <div class="lgd-row">
+          <div class="lgd-chip" style="background: var(--danger);">✗</div>
+          <span>über 20 kg leichter — nicht empfohlen</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="empty" id="empty">
+      <canvas class="empty-icon" id="empty-canvas" width="88" height="88" aria-hidden="true"></canvas>
+      <div class="empty-h">Gruppe noch leer</div>
+      <div class="empty-p">Füge mindestens zwei Personen mit Gewicht hinzu — dann erscheint die Sicherungsmatrix.</div>
+    </div>
+
+    <div class="matrix-wrap" id="matrix-wrap" style="display:none">
+      <div class="matrix-meta">
+        <span class="matrix-label">Sicherungsmatrix</span>
+        <span class="matrix-hint">Zeile = Sichernde · Spalte = Kletternde</span>
+      </div>
+      <div class="research-note">
+        <span class="research-note-icon">ℹ</span>
+        <span>
+          Untersuchungen zeigen: In einem reibungsarmen Umfeld — etwa bei geradem Seilverlauf in der Halle — liegt der optimale Gewichtsunterschied in einer Seilschaft bei <strong>± 5 kg</strong>.
+        </span>
+      </div>
+      <div class="table-scroll">
+        <table class="mtable" id="mtable"></table>
+      </div>
+      <div class="summary" id="summary"></div>
+      <div class="gear-hint" id="gear-hint" style="display:none">
+        <span class="gear-hint-icon">⚠</span>
+        <span>
+          Vorsteigende tragen zusätzliches Material — Expressschlingen, Seil und Klemmgeräte können mehrere Kilogramm hinzufügen. Das tatsächliche Gewicht im Sturz liegt entsprechend höher als hier angegeben.
+          <span class="gear-hint-devices">Mit dickerem Seil fallen die Kompensationswerte bei den meisten Geräten deutlich höher aus als mit dünnem Seil.</span>
+          <span class="gear-hint-devices">Bei großem Gewichtsunterschied empfehlen sich Bremsassistenten wie <em>Mammut Assist</em>, <em>Edelrid Ohmega</em> oder <em>Raed Zead</em>, die im Sturzfall zusätzliche Bremskraft erzeugen.</span>
+        </span>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  const persons = [];
+
+  /* ── Canvas graphics ────────────────────────────── */
+  function drawLogo(id) {
+    const c = document.getElementById(id);
+    if (!c) return;
+    const x = c.getContext('2d'), w = c.width, h = c.height, cx = w / 2, cy = h / 2;
+    x.clearRect(0, 0, w, h);
+    // Carabiner oval
+    x.save();
+    x.strokeStyle = '#E87820';
+    x.lineWidth = 2.8;
+    x.beginPath();
+    x.ellipse(cx, cy, 9, 12, 0, 0, Math.PI * 2);
+    x.stroke();
+    // Gate slot
+    x.strokeStyle = '#141820';
+    x.lineWidth = 5;
+    x.beginPath();
+    x.ellipse(cx, cy, 9, 12, 0, -0.3, 0.55);
+    x.stroke();
+    // Nose nub
+    x.fillStyle = '#E87820';
+    x.beginPath();
+    x.arc(cx + 8.6, cy - 1.8, 2.2, 0, Math.PI * 2);
+    x.fill();
+    x.restore();
+  }
+
+  function drawEmpty(id) {
+    const c = document.getElementById(id);
+    if (!c) return;
+    const x = c.getContext('2d'), cx = 44, cy = 44;
+    x.clearRect(0, 0, c.width, c.height);
+    x.strokeStyle = '#141820';
+    x.lineWidth = 3;
+    x.lineCap = 'round';
+    // Figure-8 belay device
+    x.beginPath(); x.arc(cx, cy - 16, 13, 0, Math.PI * 2); x.stroke();
+    x.beginPath(); x.arc(cx, cy + 17, 18, 0, Math.PI * 2); x.stroke();
+    x.fillStyle = '#141820';
+    x.beginPath(); x.arc(cx, cy, 3.5, 0, Math.PI * 2); x.fill();
+  }
+
+  drawLogo('logo-canvas');
+  drawEmpty('empty-canvas');
+
+  /* ── Persons ────────────────────────────────────── */
+  function addPerson(e) {
+    e.preventDefault();
+    const nameEl = document.getElementById('inp-name');
+    const kgEl   = document.getElementById('inp-kg');
+    const errEl  = document.getElementById('form-err');
+    errEl.classList.remove('on');
+
+    const name = nameEl.value.trim();
+    const kg   = parseFloat(kgEl.value);
+
+    if (!name) { return showErr('Bitte einen Namen eingeben.'); }
+    if (isNaN(kg) || kg < 30 || kg > 200) { return showErr('Gewicht muss zwischen 30 und 200 kg liegen.'); }
+    if (persons.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+      return showErr(`"${name}" ist bereits in der Gruppe.`);
+    }
+
+    persons.push({ name, kg });
+    nameEl.value = '';
+    kgEl.value   = '';
+    nameEl.focus();
+    render();
+  }
+
+  function removePerson(i) {
+    persons.splice(i, 1);
+    render();
+  }
+
+  function showErr(msg) {
+    const el = document.getElementById('form-err');
+    el.textContent = msg;
+    el.classList.add('on');
+  }
+
+  /* ── Cell logic ─────────────────────────────────── */
+  function classify(secKg, climKg) {
+    const d = climKg - secKg;
+    if (d <= 10)  return 'ok';
+    if (d <= 15)  return 'warn';
+    if (d <= 20)  return 'crit';
+    return 'danger';
+  }
+
+  const SYM = { ok: '✓', warn: '!', crit: '⚠', danger: '✗' };
+
+  function delta(secKg, climKg) {
+    const d = climKg - secKg;
+    return d > 0 ? `+${d} kg` : d < 0 ? `${d} kg` : '± 0';
+  }
+
+  /* ── Render ─────────────────────────────────────── */
+  function render() {
+    // Group eyebrow
+    const n = persons.length;
+    document.getElementById('group-eyebrow').textContent =
+      `Gruppe (${n} ${n === 1 ? 'Person' : 'Personen'})`;
+
+    // Person list
+    const list = document.getElementById('plist');
+    if (n === 0) {
+      list.innerHTML = '<div class="plist-empty">Noch niemand dabei.</div>';
+    } else {
+      list.innerHTML = persons.map((p, i) => `
+        <div class="pitem">
+          <div class="pinfo">
+            <span class="pname">${esc(p.name)}</span>
+            <span class="pkg">${p.kg} kg</span>
+          </div>
+          <button class="btn-del" onclick="removePerson(${i})" aria-label="${esc(p.name)} entfernen" title="Entfernen">×</button>
+        </div>
+      `).join('');
+    }
+
+    // Matrix visibility
+    const showMatrix = n >= 2;
+    document.getElementById('empty').style.display       = showMatrix ? 'none' : '';
+    document.getElementById('matrix-wrap').style.display = showMatrix ? ''     : 'none';
+
+    if (!showMatrix) return;
+
+    /* Build table */
+    const t = document.getElementById('mtable');
+    let h = '';
+
+    // Column headers
+    h += '<thead><tr><th></th>';
+    persons.forEach(p => {
+      h += `<th class="col-hdr"><span class="col-hdr-name">${esc(p.name)}</span><span class="col-hdr-kg">${p.kg} kg</span></th>`;
+    });
+    h += '</tr></thead><tbody>';
+
+    // Rows
+    persons.forEach((sec, si) => {
+      h += '<tr>';
+      h += `<td class="row-hdr"><span class="row-hdr-name">${esc(sec.name)}</span><span class="row-hdr-kg">${sec.kg} kg</span></td>`;
+      persons.forEach((clim, ci) => {
+        if (si === ci) {
+          h += '<td class="mcell mcell-self"><div class="mcell-inner"><span class="mcell-sym">—</span></div></td>';
+        } else {
+          const r = classify(sec.kg, clim.kg);
+          h += `<td class="mcell mcell-${r}"><div class="mcell-inner"><span class="mcell-sym">${SYM[r]}</span><span class="mcell-delta">${delta(sec.kg, clim.kg)}</span></div></td>`;
+        }
+      });
+      h += '</tr>';
+    });
+
+    h += '</tbody>';
+    t.innerHTML = h;
+
+    renderSummary();
+  }
+
+  function renderSummary() {
+    const el       = document.getElementById('summary');
+    const hintEl   = document.getElementById('gear-hint');
+    if (persons.length < 2) { el.innerHTML = ''; hintEl.style.display = 'none'; return; }
+
+    const hasHeavyMismatch = persons.some(sec =>
+      persons.some(clim => sec !== clim && (clim.kg - sec.kg) >= 15)
+    );
+    hintEl.style.display = hasHeavyMismatch ? '' : 'none';
+
+    const sorted = [...persons].sort((a, b) => a.kg - b.kg);
+    const light  = sorted[0];
+    const heavy  = sorted[sorted.length - 1];
+
+    if (light === heavy || light.kg === heavy.kg) {
+      el.innerHTML = '<div class="summary-line">Alle Personen wiegen gleich viel — gegenseitiges Sichern ist in beide Richtungen unbedenklich.</div>';
+      return;
+    }
+
+    const diff = heavy.kg - light.kg;
+    const ratingReverse = classify(light.kg, heavy.kg);
+
+    const VERDICT = {
+      ok:     `<span class="rating-ok">problemlos</span> — der Unterschied von ${diff} kg liegt im grünen Bereich`,
+      warn:   `<span class="rating-warn">grenzwertig</span> — der Unterschied von ${diff} kg ist knapp über der Empfehlung`,
+      crit:   `<span class="rating-crit">kritisch</span> — der Unterschied von ${diff} kg überschreitet die Empfehlung deutlich`,
+      danger: `<span class="rating-danger">nicht empfohlen</span> — der Unterschied von ${diff} kg ist zu groß`,
+    };
+
+    const canReverse = ratingReverse === 'ok';
+
+    el.innerHTML = `
+      <div class="summary-line">
+        <strong>${esc(heavy.name)}</strong> (${heavy.kg} kg) kann <strong>${esc(light.name)}</strong> (${light.kg} kg) sichern,
+        da ${esc(heavy.name)} ${diff} kg schwerer ist.
+      </div>
+      <div class="summary-line">
+        <strong>${esc(light.name)}</strong> (${light.kg} kg) kann <strong>${esc(heavy.name)}</strong> (${heavy.kg} kg)
+        ${canReverse ? 'sichern' : 'nicht sichern'} — ${VERDICT[ratingReverse]}.
+      </div>
+    `;
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  render();
+</script>
+</body>
+</html>
