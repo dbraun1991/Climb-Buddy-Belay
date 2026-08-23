@@ -2,6 +2,10 @@
 
 Einfaches Browser-Tool zur Sicherungsmatrix für Klettergruppen im Lead-Klettern.
 
+## Live
+
+[Climb-Buddy-Belay via GitHub-Pages](https://dbraun1991.github.io/Climb-Buddy-Belay/)
+
 ## Was es macht
 
 Personen mit Namen und Körpergewicht eintragen — das Tool berechnet automatisch, wer wen sichern kann. Die Ergebnisse werden als farbkodierte Matrix dargestellt:
