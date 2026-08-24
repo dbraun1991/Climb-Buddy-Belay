@@ -152,6 +152,16 @@ person as belayer and column person as climber — do not swap the argument
 order when touching this code, it's not symmetric (a cell and its mirror
 image across the diagonal represent different, unrelated ratings).
 
+This row/column meaning is shown as two dimension-info bands *inside* the
+table itself, not as separate prose above it: `axisClimbers` (`.axis-col-label`,
+`<th colspan>` spanning the cell columns, sits between the column person
+headers and the first cell row) and `axisBelayers` (`.axis-row-label`,
+`<td rowspan>` spanning the cell rows, `writing-mode: vertical-rl` rotated
+text, rendered once on the first row only — `si === 0` in `render()`'s
+table-building loop). `renderMatrixPng()`'s `drawMatrixContent()` draws the
+same two bands by hand (dashed `ctx.setLineDash` separators, `ctx.rotate(-Math.PI/2)`
+for the vertical one) — keep both in sync if this changes.
+
 ## Domain rules (do not change without updating all three places)
 
 The kg-threshold bands are duplicated in four places that must stay

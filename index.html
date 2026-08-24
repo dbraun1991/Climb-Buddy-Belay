@@ -266,7 +266,6 @@
       text-transform: uppercase;
       color: var(--muted);
     }
-    .matrix-hint { font-size: 11px; color: var(--muted); }
     .btn-share {
       margin-left: auto;
       padding: 5px 12px;
@@ -439,6 +438,39 @@
       display: block;
       font-family: ui-monospace, Menlo, monospace;
       font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Dimension info ("Row = belayers · Column = climbers"), drawn as a
+       real block inside the matrix — a horizontal band above the cell
+       columns, a vertical (rotated) band to the left of the cell rows —
+       rather than as separate prose above the table. */
+    .axis-col-label {
+      text-align: center;
+      padding: 3px 0 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px dashed var(--border);
+    }
+    .axis-row-label {
+      width: 20px;
+      padding: 0;
+      text-align: center;
+      vertical-align: middle;
+      border-right: 1px dashed var(--border);
+    }
+    .axis-row-label span {
+      display: inline-block;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      white-space: nowrap;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
       color: var(--muted);
     }
 
@@ -639,7 +671,6 @@
   <main class="main" id="main">
     <div class="matrix-meta">
       <span class="matrix-label" data-i18n="matrixLabel">Sicherungsmatrix</span>
-      <span class="matrix-hint" data-i18n="matrixHint">Zeile = Sichernde · Spalte = Kletternde</span>
       <button type="button" class="btn-share" id="btn-share" onclick="shareMatrix()" data-i18n="shareButton" disabled>Teilen</button>
     </div>
 
@@ -728,7 +759,8 @@
       emptyTitle: 'Gruppe noch leer',
       emptyText: 'Füge mindestens zwei Personen mit Gewicht hinzu — dann erscheint die Sicherungsmatrix.',
       matrixLabel: 'Sicherungsmatrix',
-      matrixHint: 'Zeile = Sichernde · Spalte = Kletternde',
+      axisBelayers: 'Sichernde',
+      axisClimbers: 'Kletternde',
       shareButton: 'Teilen',
       shareGenerating: 'Erstelle Bild…',
       shareDone: 'Geteilt',
@@ -790,7 +822,8 @@
       emptyTitle: 'Group is empty',
       emptyText: 'Add at least two people with weight — then the belay matrix appears.',
       matrixLabel: 'Belay matrix',
-      matrixHint: 'Row = belayer · Column = climber',
+      axisBelayers: 'Belayers',
+      axisClimbers: 'Climbers',
       shareButton: 'Share',
       shareGenerating: 'Generating…',
       shareDone: 'Shared',
@@ -1052,17 +1085,25 @@
     const t2 = document.getElementById('mtable');
     let h = '';
 
-    // Column headers
-    h += '<thead><tr><th></th>';
+    // Column headers, corner spanning the row-header-name + row-axis-label columns
+    h += '<thead><tr><th colspan="2"></th>';
     persons.forEach(p => {
       h += `<th class="col-hdr"><span class="col-hdr-name">${esc(p.name)}</span><span class="col-hdr-kg">${p.kg} kg</span></th>`;
     });
-    h += '</tr></thead><tbody>';
+    h += '</tr>';
+
+    // Dimension info: "climbers" band spanning the cell columns
+    h += `<tr><th colspan="2"></th><th colspan="${persons.length}" class="axis-col-label">${t('axisClimbers')}</th></tr>`;
+    h += '</thead><tbody>';
 
     // Rows
     persons.forEach((sec, si) => {
       h += '<tr>';
       h += `<td class="row-hdr"><span class="row-hdr-name">${esc(sec.name)}</span><span class="row-hdr-kg">${sec.kg} kg</span></td>`;
+      // Dimension info: "belayers" band spanning the cell rows, rendered once
+      if (si === 0) {
+        h += `<td rowspan="${persons.length}" class="axis-row-label"><span>${t('axisBelayers')}</span></td>`;
+      }
       persons.forEach((clim, ci) => {
         if (si === ci) {
           h += '<td class="mcell mcell-self"><div class="mcell-inner"><span class="mcell-sym">—</span></div></td>';
@@ -1170,6 +1211,7 @@
   const EXPORT_FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
   const EXPORT_PAD = 24;
   const EXPORT_ROW_HEADER_W = 104;
+  const EXPORT_AXIS_W = 20;
   const EXPORT_CELL_W = 84;
   const EXPORT_CELL_H = 54;
   const EXPORT_MIN_WIDTH = 640;
@@ -1295,12 +1337,8 @@
 
     ctx.fillStyle = colors.muted;
     ctx.font = exportFont(10, true, false);
-    const matrixLabel = t('matrixLabel').toUpperCase();
-    ctx.fillText(matrixLabel, EXPORT_PAD, y + 10);
-    const labelW = ctx.measureText(matrixLabel).width;
-    ctx.font = exportFont(11, false, false);
-    ctx.fillText(t('matrixHint'), EXPORT_PAD + labelW + 10, y + 11);
-    y += 11 + 16;
+    ctx.fillText(t('matrixLabel').toUpperCase(), EXPORT_PAD, y + 10);
+    y += 10 + 16;
 
     // Research note (blue box)
     const noteIconW = 24;
@@ -1317,8 +1355,11 @@
     y += noteBoxH + 20;
 
     // Matrix table
+    const cellsLeft = EXPORT_PAD + EXPORT_ROW_HEADER_W + EXPORT_AXIS_W;
+    const cellsWidth = persons.length * EXPORT_CELL_W;
+
     persons.forEach((p, i) => {
-      const cx = EXPORT_PAD + EXPORT_ROW_HEADER_W + i * EXPORT_CELL_W + EXPORT_CELL_W / 2;
+      const cx = cellsLeft + i * EXPORT_CELL_W + EXPORT_CELL_W / 2;
       ctx.textAlign = 'center';
       ctx.fillStyle = colors.text;
       ctx.font = exportFont(12, true, false);
@@ -1327,8 +1368,23 @@
       ctx.font = exportFont(10, false, false);
       ctx.fillText(p.kg + ' kg', cx, y + 28);
     });
-    y += 40;
+    y += 34;
 
+    // Dimension info: "climbers" band spanning the cell columns
+    ctx.strokeStyle = colors.border;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(EXPORT_PAD, y + EXPORT_AXIS_W - 2);
+    ctx.lineTo(width - EXPORT_PAD, y + EXPORT_AXIS_W - 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = colors.muted;
+    ctx.font = exportFont(10, true, false);
+    ctx.textAlign = 'center';
+    ctx.fillText(t('axisClimbers').toUpperCase(), cellsLeft + cellsWidth / 2, y + EXPORT_AXIS_W - 8);
+    y += EXPORT_AXIS_W;
+
+    const tableTop = y;
     const ratingColor = { ok: colors.ok, warn: colors.warn, crit: colors.crit, danger: colors.danger };
     persons.forEach((sec, si) => {
       const rowY = y;
@@ -1341,7 +1397,7 @@
       ctx.fillText(sec.kg + ' kg', EXPORT_PAD + EXPORT_ROW_HEADER_W - 10, rowY + EXPORT_CELL_H / 2 + 10);
 
       persons.forEach((clim, ci) => {
-        const cellX = EXPORT_PAD + EXPORT_ROW_HEADER_W + ci * EXPORT_CELL_W;
+        const cellX = cellsLeft + ci * EXPORT_CELL_W;
         ctx.textAlign = 'center';
         if (si === ci) {
           ctx.fillStyle = colors.selfBg;
@@ -1362,6 +1418,26 @@
       });
       y += EXPORT_CELL_H + 4;
     });
+    const cellsHeight = y - 4 - tableTop;
+
+    // Dimension info: "belayers" band spanning the cell rows (drawn last,
+    // over blank space to the axis column's left — never overlaps a cell)
+    ctx.save();
+    ctx.strokeStyle = colors.border;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(cellsLeft - 2, tableTop);
+    ctx.lineTo(cellsLeft - 2, tableTop + cellsHeight);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.translate(EXPORT_PAD + EXPORT_ROW_HEADER_W + EXPORT_AXIS_W / 2 - 4, tableTop + cellsHeight / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = colors.muted;
+    ctx.font = exportFont(10, true, false);
+    ctx.fillText(t('axisBelayers').toUpperCase(), 0, 0);
+    ctx.restore();
+
     y += 16;
     ctx.textAlign = 'left';
 
@@ -1446,7 +1522,7 @@
     return new Promise((resolve, reject) => {
       try {
         const colors = exportColors();
-        const width = Math.max(EXPORT_MIN_WIDTH, EXPORT_PAD * 2 + EXPORT_ROW_HEADER_W + persons.length * EXPORT_CELL_W);
+        const width = Math.max(EXPORT_MIN_WIDTH, EXPORT_PAD * 2 + EXPORT_ROW_HEADER_W + EXPORT_AXIS_W + persons.length * EXPORT_CELL_W);
 
         const scratch = document.createElement('canvas');
         scratch.width = width;
