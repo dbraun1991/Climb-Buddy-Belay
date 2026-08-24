@@ -38,6 +38,10 @@ Anna, 55
 Ben, 90
 ```
 
+## Teilen
+
+Der "Teilen"-Button über der Matrix exportiert Matrix, Zusammenfassung und Hinweise als PNG-Bild — am Handy öffnet sich das Teilen-Menü des Betriebssystems, am Computer landet das Bild in der Zwischenablage (zum Einfügen z. B. in eine Chat-Nachricht).
+
 ## Sprache / Language
 
 Umschaltbar über die DE/EN-Buttons oben rechts, oder direkt per URL: `?lang=en` bzw. `?lang=de`. Standard ist Deutsch.

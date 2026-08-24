@@ -55,6 +55,8 @@ Relevant ones:
 - `0007` — German-only UI, no i18n layer (superseded by `0009`)
 - `0008` — canvas-drawn icons, no image/SVG/icon-font assets
 - `0009` — inline vanilla-JS i18n (EN/DE), no CDN library, no locale files
+- `0010` — hand-drawn canvas PNG export (not SVG-foreignObject-to-canvas,
+  which Chrome permanently taints — see the ADR before touching `renderMatrixPng`)
 
 If a task requires reversing one of these, say so explicitly rather than
 quietly working around it — e.g. adding `localStorage` contradicts `0003`
@@ -115,6 +117,22 @@ Everything is in one `<script>` block near the end of the file.
   toggled (nothing can click the hidden summary), so desktop stays visually
   and behaviorally identical to before this existed — no JS involved, pure
   CSS + native `<details>`.
+- **Share/export**: `computeSummary(list)` — the derived "can belay all" /
+  "can lead-climb with all" lists plus the light/heavy verdict — is the
+  single source of truth used by both `renderSummary()` (DOM) and
+  `renderMatrixPng()` (canvas export), so the two can never disagree.
+  `renderMatrixPng()` draws the export by hand with Canvas 2D primitives
+  (`drawMatrixContent()`), *not* by rasterizing the DOM — see `docs/adr/0010`
+  for why (Chrome taints any canvas drawn from an SVG containing
+  `foreignObject`, which is the more obvious approach and was tried first).
+  `parseRichHtml()`/`wrapRichText()`/`drawRichLines()` reuse the existing
+  `<strong>`/`<em>`/`<span class="rating-*">` markup already in
+  `TRANSLATIONS` strings via a small trusted-content tokenizer — extending
+  a translation string with a new inline tag needs a matching case added
+  there too, or the export will just print the tag literally.
+  `shareMatrix()` branches on `navigator.share`+`canShare` (mobile, gated
+  by the same `max-width: 768px` breakpoint as the sidebar) vs.
+  `navigator.clipboard.write` (desktop) vs. a plain download (fallback).
 
 Matrix semantics: **row = securing person (Sichernde), column = climbing
 person (Kletternde)**. `classify(sec.kg, clim.kg)` is called with the row

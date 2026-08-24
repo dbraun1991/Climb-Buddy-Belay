@@ -265,6 +265,24 @@
       color: var(--muted);
     }
     .matrix-hint { font-size: 11px; color: var(--muted); }
+    .btn-share {
+      margin-left: auto;
+      padding: 5px 12px;
+      background: none;
+      border: 1.5px solid var(--border-s);
+      color: var(--text);
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.1s, border-color 0.1s, color 0.1s;
+    }
+    .btn-share:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-share:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .btn-share:disabled { opacity: 0.6; cursor: default; }
     .table-scroll { overflow-x: auto; }
 
     /* Summary sentences */
@@ -604,6 +622,7 @@
       <div class="matrix-meta">
         <span class="matrix-label" data-i18n="matrixLabel">Sicherungsmatrix</span>
         <span class="matrix-hint" data-i18n="matrixHint">Zeile = Sichernde · Spalte = Kletternde</span>
+        <button type="button" class="btn-share" id="btn-share" onclick="shareMatrix()" data-i18n="shareButton">Teilen</button>
       </div>
       <div class="research-note">
         <span class="research-note-icon">ℹ</span>
@@ -674,6 +693,12 @@
       emptyText: 'Füge mindestens zwei Personen mit Gewicht hinzu — dann erscheint die Sicherungsmatrix.',
       matrixLabel: 'Sicherungsmatrix',
       matrixHint: 'Zeile = Sichernde · Spalte = Kletternde',
+      shareButton: 'Teilen',
+      shareGenerating: 'Erstelle Bild…',
+      shareDone: 'Geteilt',
+      shareCopied: 'In Zwischenablage kopiert',
+      shareDownloaded: 'Heruntergeladen',
+      shareError: 'Fehler beim Teilen',
       researchNote: 'Untersuchungen zeigen: In einem reibungsarmen Umfeld — etwa bei geradem Seilverlauf in der Halle — liegt der optimale Gewichtsunterschied in einer Seilschaft bei <strong>± 5 kg</strong>.',
       gearHintTitle: 'Zusätzlich zu beachten',
       gearHint1: 'Vorsteigende tragen zusätzliches Material — Expressschlingen, Seil und Klemmgeräte können mehrere Kilogramm hinzufügen. Das tatsächliche Gewicht im Sturz liegt entsprechend höher als hier angegeben.',
@@ -727,6 +752,12 @@
       emptyText: 'Add at least two people with weight — then the belay matrix appears.',
       matrixLabel: 'Belay matrix',
       matrixHint: 'Row = belayer · Column = climber',
+      shareButton: 'Share',
+      shareGenerating: 'Generating…',
+      shareDone: 'Shared',
+      shareCopied: 'Copied to clipboard',
+      shareDownloaded: 'Downloaded',
+      shareError: 'Sharing failed',
       researchNote: 'Research shows: in a low-friction setup — e.g. a straight rope run in the gym — the optimal weight difference on a rope team is <strong>± 5 kg</strong>.',
       gearHintTitle: 'Also worth noting',
       gearHint1: 'Lead climbers carry extra gear — quickdraws, rope and cams can add several kilograms. The actual fall weight is therefore higher than shown here.',
@@ -1003,23 +1034,46 @@
     renderSummary();
   }
 
+  /* Single source of truth for the derived "who can belay/climb with       */
+  /* everyone" lists and the light/heavy verdict — used by both the live    */
+  /* DOM summary and the canvas export, so the two can never drift.         */
+  function computeSummary(list) {
+    const hasHeavyMismatch = list.some(sec =>
+      list.some(clim => sec !== clim && (clim.kg - sec.kg) >= 15)
+    );
+    const canBelayAll = list.filter(sec =>
+      list.every(clim => sec === clim || classify(sec.kg, clim.kg) === 'ok')
+    );
+    const canClimbWithAll = list.filter(clim =>
+      list.every(sec => sec === clim || classify(sec.kg, clim.kg) === 'ok')
+    );
+
+    const sorted = [...list].sort((a, b) => a.kg - b.kg);
+    const light  = sorted[0];
+    const heavy  = sorted[sorted.length - 1];
+    const equalWeight = light === heavy || light.kg === heavy.kg;
+
+    let diff = null, ratingReverse = null, canReverse = null;
+    if (!equalWeight) {
+      diff = heavy.kg - light.kg;
+      ratingReverse = classify(light.kg, heavy.kg);
+      canReverse = ratingReverse === 'ok';
+    }
+
+    return { hasHeavyMismatch, canBelayAll, canClimbWithAll, light, heavy, equalWeight, diff, ratingReverse, canReverse };
+  }
+
+  function buildVerdictHtml(rating, diff) {
+    return `<span class="rating-${rating}">${t('verdict_' + rating + '_label')}</span> — ${t('verdict_' + rating + '_detail', { diff })}`;
+  }
+
   function renderSummary() {
     const el       = document.getElementById('summary');
     const hintEl   = document.getElementById('gear-hint');
     if (persons.length < 2) { el.innerHTML = ''; hintEl.style.display = 'none'; return; }
 
-    const hasHeavyMismatch = persons.some(sec =>
-      persons.some(clim => sec !== clim && (clim.kg - sec.kg) >= 15)
-    );
-    hintEl.style.display = hasHeavyMismatch ? '' : 'none';
-
-    // Wer kann alle sichern / mit allen vorsteigen (row/column ok-check)
-    const canBelayAll = persons.filter(sec =>
-      persons.every(clim => sec === clim || classify(sec.kg, clim.kg) === 'ok')
-    );
-    const canClimbWithAll = persons.filter(clim =>
-      persons.every(sec => sec === clim || classify(sec.kg, clim.kg) === 'ok')
-    );
+    const s = computeSummary(persons);
+    hintEl.style.display = s.hasHeavyMismatch ? '' : 'none';
 
     const groupLine = (label, list) => `
       <div class="summary-group-line">
@@ -1029,32 +1083,23 @@
 
     const groupsBlock = `
       <div class="summary-groups">
-        ${groupLine(t('canBelayAll'), canBelayAll)}
-        ${groupLine(t('canClimbWithAll'), canClimbWithAll)}
+        ${groupLine(t('canBelayAll'), s.canBelayAll)}
+        ${groupLine(t('canClimbWithAll'), s.canClimbWithAll)}
       </div>
     `;
 
-    const sorted = [...persons].sort((a, b) => a.kg - b.kg);
-    const light  = sorted[0];
-    const heavy  = sorted[sorted.length - 1];
-
-    if (light === heavy || light.kg === heavy.kg) {
+    if (s.equalWeight) {
       el.innerHTML = groupsBlock + `<div class="summary-line">${t('equalWeight')}</div>`;
       return;
     }
 
-    const diff = heavy.kg - light.kg;
-    const ratingReverse = classify(light.kg, heavy.kg);
-
-    const verdictHtml = `<span class="rating-${ratingReverse}">${t('verdict_' + ratingReverse + '_label')}</span> — ${t('verdict_' + ratingReverse + '_detail', { diff })}`;
-
-    const canReverse = ratingReverse === 'ok';
-    const lightLineKey = canReverse ? 'summaryLightCanBelay' : 'summaryLightCannotBelay';
+    const verdictHtml  = buildVerdictHtml(s.ratingReverse, s.diff);
+    const lightLineKey = s.canReverse ? 'summaryLightCanBelay' : 'summaryLightCannotBelay';
 
     el.innerHTML = `
       ${groupsBlock}
-      <div class="summary-line">${t('summaryHeavyCanBelay', { heavy: esc(heavy.name), light: esc(light.name), heavyKg: heavy.kg, lightKg: light.kg, diff })}</div>
-      <div class="summary-line">${t(lightLineKey, { light: esc(light.name), heavy: esc(heavy.name), lightKg: light.kg, heavyKg: heavy.kg, verdict: verdictHtml })}</div>
+      <div class="summary-line">${t('summaryHeavyCanBelay', { heavy: esc(s.heavy.name), light: esc(s.light.name), heavyKg: s.heavy.kg, lightKg: s.light.kg, diff: s.diff })}</div>
+      <div class="summary-line">${t(lightLineKey, { light: esc(s.light.name), heavy: esc(s.heavy.name), lightKg: s.light.kg, heavyKg: s.heavy.kg, verdict: verdictHtml })}</div>
     `;
   }
 
@@ -1062,6 +1107,372 @@
     return String(s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ── Share / export as PNG ──────────────────────── */
+  /* Hand-drawn canvas export — NOT the more obvious SVG <foreignObject> ->  */
+  /* <img> -> <canvas> trick. That was tried first and works in Firefox,    */
+  /* but Chrome permanently taints any canvas drawn from an SVG image that  */
+  /* contains foreignObject HTML, even same-origin with zero external      */
+  /* resources (anti-fingerprinting policy) — toBlob() then hangs forever   */
+  /* instead of erroring. See docs/adr/0010 for the full account. Drawing   */
+  /* with plain Canvas 2D primitives (fillRect/fillText), extending the     */
+  /* existing drawLogo/drawEmpty pattern, sidesteps this entirely and keeps */
+  /* the app dependency-free. Reads persons/computeSummary() directly       */
+  /* rather than scraping the DOM — single source of truth with the live    */
+  /* summary, and immune to anything CSS/layout does on screen.             */
+  const EXPORT_FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+  const EXPORT_PAD = 24;
+  const EXPORT_ROW_HEADER_W = 104;
+  const EXPORT_CELL_W = 84;
+  const EXPORT_CELL_H = 54;
+  const EXPORT_MIN_WIDTH = 640;
+
+  function exportColors() {
+    const cs = getComputedStyle(document.documentElement);
+    const v = name => cs.getPropertyValue(name).trim();
+    return {
+      text: v('--text'), muted: v('--muted'), accent: v('--accent'), heat: v('--heat'),
+      border: v('--border'), ok: v('--ok'), warn: v('--warn'), crit: v('--crit'),
+      danger: v('--danger'), selfBg: v('--self-bg'), selfFg: v('--self-fg'),
+      ground: v('--ground'),
+    };
+  }
+
+  function unescapeHtml(s) {
+    return s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+  }
+
+  // Trusted-content-only tokenizer: understands exactly the three inline
+  // tags this app's own translation templates ever produce (<strong>, <em>,
+  // <span class="rating-*">) — not a general HTML parser. Any "<"/">" that
+  // reached here from a person's name already went through esc() first, so
+  // it reads as literal text (the [^<]+ branch), not a fake tag.
+  function parseRichHtml(html, colors) {
+    const runs = [];
+    const re = /<strong>(.*?)<\/strong>|<em>(.*?)<\/em>|<span class="rating-(ok|warn|crit|danger)">(.*?)<\/span>|([^<]+)/g;
+    let m;
+    while ((m = re.exec(html)) !== null) {
+      if (m[1] !== undefined) runs.push({ text: m[1], bold: true });
+      else if (m[2] !== undefined) runs.push({ text: m[2], italic: true });
+      else if (m[3] !== undefined) runs.push({ text: m[4], color: colors[m[3]] });
+      else if (m[5] !== undefined) runs.push({ text: m[5] });
+    }
+    return runs;
+  }
+
+  function exportFont(sizePx, bold, italic) {
+    return (italic ? 'italic ' : '') + (bold ? '700 ' : '400 ') + sizePx + 'px ' + EXPORT_FONT;
+  }
+
+  // Flattens runs into word tokens carrying their own "was there whitespace
+  // right before this word in the source" flag — needed because a run
+  // boundary (e.g. </strong> immediately followed by ".") often has no
+  // space between them, which naive per-run word-splitting loses, producing
+  // wrongly-spaced punctuation like "kg ." or "Assist ,".
+  function tokenizeRuns(runs) {
+    const tokens = [];
+    let pendingSpace = false;
+    runs.forEach(run => {
+      unescapeHtml(run.text).split(/(\s+)/).filter(Boolean).forEach(part => {
+        if (/^\s+$/.test(part)) { pendingSpace = true; return; }
+        tokens.push({ text: part, bold: run.bold, italic: run.italic, color: run.color || null, spaceBefore: tokens.length > 0 && pendingSpace });
+        pendingSpace = false;
+      });
+    });
+    return tokens;
+  }
+
+  function wrapRichText(ctx, runs, maxWidth, sizePx) {
+    const tokens = tokenizeRuns(runs);
+    const lines = [];
+    let line = [], lineWidth = 0;
+    tokens.forEach(tok => {
+      const font = exportFont(sizePx, tok.bold, tok.italic);
+      ctx.font = font;
+      const wWidth = ctx.measureText(tok.text).width;
+      const spaceW = tok.spaceBefore ? ctx.measureText(' ').width : 0;
+      if (line.length > 0 && lineWidth + spaceW + wWidth > maxWidth) {
+        lines.push(line);
+        line = [{ text: tok.text, font, color: tok.color, spaceBefore: false }];
+        lineWidth = wWidth;
+      } else {
+        line.push({ text: tok.text, font, color: tok.color, spaceBefore: line.length > 0 ? tok.spaceBefore : false });
+        lineWidth += spaceW + wWidth;
+      }
+    });
+    if (line.length) lines.push(line);
+    return lines;
+  }
+
+  function drawRichLines(ctx, lines, x, yTop, lineHeight, defaultColor) {
+    let y = yTop;
+    ctx.textAlign = 'left';
+    lines.forEach(line => {
+      let cx = x;
+      line.forEach(tok => {
+        ctx.font = tok.font;
+        if (tok.spaceBefore) cx += ctx.measureText(' ').width;
+        ctx.fillStyle = tok.color || defaultColor;
+        ctx.fillText(tok.text, cx, y);
+        cx += ctx.measureText(tok.text).width;
+      });
+      y += lineHeight;
+    });
+    return y;
+  }
+
+  function fillRoundRect(ctx, x, y, w, h, r) {
+    if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); ctx.fill(); }
+    else { ctx.fillRect(x, y, w, h); }
+  }
+
+  // Draws the whole exportable block (title, research note, matrix table,
+  // summary, gear-hint) starting at y=0 and returns the total height used.
+  // Called twice: once on a disposable canvas just to measure the height
+  // (draw calls outside a canvas's own bounds are harmless, never error),
+  // then again on the correctly-sized real canvas.
+  function drawMatrixContent(ctx, width, colors) {
+    const contentW = width - EXPORT_PAD * 2;
+    let y = EXPORT_PAD;
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = colors.heat;
+    ctx.font = exportFont(17, true, false);
+    ctx.fillText(t('headerTitle').toUpperCase(), EXPORT_PAD, y + 17);
+    y += 17 + 6;
+
+    ctx.fillStyle = colors.muted;
+    ctx.font = exportFont(11, false, false);
+    ctx.fillText(t('headerSub'), EXPORT_PAD, y + 11);
+    y += 11 + 20;
+
+    ctx.fillStyle = colors.muted;
+    ctx.font = exportFont(10, true, false);
+    const matrixLabel = t('matrixLabel').toUpperCase();
+    ctx.fillText(matrixLabel, EXPORT_PAD, y + 10);
+    const labelW = ctx.measureText(matrixLabel).width;
+    ctx.font = exportFont(11, false, false);
+    ctx.fillText(t('matrixHint'), EXPORT_PAD + labelW + 10, y + 11);
+    y += 11 + 16;
+
+    // Research note (blue box)
+    const noteIconW = 24;
+    const noteLines = wrapRichText(ctx, parseRichHtml(t('researchNote'), colors), contentW - 24 - noteIconW, 13);
+    const noteLineH = 18;
+    const noteBoxH = 24 + noteLines.length * noteLineH;
+    ctx.fillStyle = '#EFF6FF';
+    fillRoundRect(ctx, EXPORT_PAD, y, contentW, noteBoxH, 3);
+    ctx.fillStyle = colors.accent;
+    ctx.fillRect(EXPORT_PAD, y, 3, noteBoxH);
+    ctx.font = exportFont(13, true, false);
+    ctx.fillText('ℹ', EXPORT_PAD + 13, y + 12 + 13);
+    drawRichLines(ctx, noteLines, EXPORT_PAD + noteIconW, y + 12 + 13, noteLineH, '#1E3A6E');
+    y += noteBoxH + 20;
+
+    // Matrix table
+    persons.forEach((p, i) => {
+      const cx = EXPORT_PAD + EXPORT_ROW_HEADER_W + i * EXPORT_CELL_W + EXPORT_CELL_W / 2;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = colors.text;
+      ctx.font = exportFont(12, true, false);
+      ctx.fillText(p.name, cx, y + 14);
+      ctx.fillStyle = colors.muted;
+      ctx.font = exportFont(10, false, false);
+      ctx.fillText(p.kg + ' kg', cx, y + 28);
+    });
+    y += 40;
+
+    const ratingColor = { ok: colors.ok, warn: colors.warn, crit: colors.crit, danger: colors.danger };
+    persons.forEach((sec, si) => {
+      const rowY = y;
+      ctx.textAlign = 'right';
+      ctx.fillStyle = colors.text;
+      ctx.font = exportFont(13, true, false);
+      ctx.fillText(sec.name, EXPORT_PAD + EXPORT_ROW_HEADER_W - 10, rowY + EXPORT_CELL_H / 2 - 4);
+      ctx.fillStyle = colors.muted;
+      ctx.font = exportFont(10, false, false);
+      ctx.fillText(sec.kg + ' kg', EXPORT_PAD + EXPORT_ROW_HEADER_W - 10, rowY + EXPORT_CELL_H / 2 + 10);
+
+      persons.forEach((clim, ci) => {
+        const cellX = EXPORT_PAD + EXPORT_ROW_HEADER_W + ci * EXPORT_CELL_W;
+        ctx.textAlign = 'center';
+        if (si === ci) {
+          ctx.fillStyle = colors.selfBg;
+          fillRoundRect(ctx, cellX + 2, rowY, EXPORT_CELL_W - 4, EXPORT_CELL_H, 2);
+          ctx.fillStyle = colors.selfFg;
+          ctx.font = exportFont(14, true, false);
+          ctx.fillText('—', cellX + EXPORT_CELL_W / 2, rowY + EXPORT_CELL_H / 2 + 5);
+        } else {
+          const r = classify(sec.kg, clim.kg);
+          ctx.fillStyle = ratingColor[r];
+          fillRoundRect(ctx, cellX + 2, rowY, EXPORT_CELL_W - 4, EXPORT_CELL_H, 2);
+          ctx.fillStyle = '#fff';
+          ctx.font = exportFont(14, true, false);
+          ctx.fillText(SYM[r], cellX + EXPORT_CELL_W / 2, rowY + EXPORT_CELL_H / 2 - 2);
+          ctx.font = exportFont(10, true, false);
+          ctx.fillText(delta(sec.kg, clim.kg), cellX + EXPORT_CELL_W / 2, rowY + EXPORT_CELL_H / 2 + 14);
+        }
+      });
+      y += EXPORT_CELL_H + 4;
+    });
+    y += 16;
+    ctx.textAlign = 'left';
+
+    // Summary
+    const s = computeSummary(persons);
+    const groupLine = (label, list) => {
+      const names = list.length ? esc(list.map(p => p.name).join(', ')) : `<em>${t('nobody')}</em>`;
+      return `<strong>${label}:</strong> ${names}`;
+    };
+    [groupLine(t('canBelayAll'), s.canBelayAll), groupLine(t('canClimbWithAll'), s.canClimbWithAll)].forEach(html => {
+      const lines = wrapRichText(ctx, parseRichHtml(html, colors), contentW, 13);
+      y = drawRichLines(ctx, lines, EXPORT_PAD, y + 13, 18, colors.text) - 13 + 18 + 4;
+    });
+    y += 8;
+    ctx.strokeStyle = colors.border;
+    ctx.beginPath();
+    ctx.moveTo(EXPORT_PAD, y);
+    ctx.lineTo(width - EXPORT_PAD, y);
+    ctx.stroke();
+    y += 16;
+
+    let sentenceHtmls;
+    if (s.equalWeight) {
+      sentenceHtmls = [t('equalWeight')];
+    } else {
+      const verdictHtml  = buildVerdictHtml(s.ratingReverse, s.diff);
+      const lightLineKey = s.canReverse ? 'summaryLightCanBelay' : 'summaryLightCannotBelay';
+      sentenceHtmls = [
+        t('summaryHeavyCanBelay', { heavy: esc(s.heavy.name), light: esc(s.light.name), heavyKg: s.heavy.kg, lightKg: s.light.kg, diff: s.diff }),
+        t(lightLineKey, { light: esc(s.light.name), heavy: esc(s.heavy.name), lightKg: s.light.kg, heavyKg: s.heavy.kg, verdict: verdictHtml }),
+      ];
+    }
+    sentenceHtmls.forEach(html => {
+      const lines = wrapRichText(ctx, parseRichHtml(html, colors), contentW, 13);
+      y = drawRichLines(ctx, lines, EXPORT_PAD, y + 13, 18, colors.text) - 13 + 18 + 6;
+    });
+    y += 10;
+
+    // Gear hint (yellow box) — only when a >=15kg mismatch exists, same as live UI
+    if (s.hasHeavyMismatch) {
+      const items = [t('gearHint1'), t('gearHint2'), t('gearHint3')];
+      const numW = 22;
+      const itemLineH = 18;
+      const itemGap = 10;
+      const wrappedItems = items.map(html => wrapRichText(ctx, parseRichHtml(html, colors), contentW - 24 - numW, 13));
+      const titleH = 24;
+      const itemsH = wrappedItems.reduce((sum, lines) => sum + lines.length * itemLineH + itemGap, 0);
+      const boxH = titleH + itemsH + 12;
+
+      ctx.fillStyle = '#FEF3C7';
+      fillRoundRect(ctx, EXPORT_PAD, y, contentW, boxH, 3);
+      ctx.fillStyle = colors.warn;
+      ctx.fillRect(EXPORT_PAD, y, 3, boxH);
+
+      ctx.fillStyle = '#8A5B00';
+      ctx.font = exportFont(11, true, false);
+      ctx.fillText(t('gearHintTitle').toUpperCase(), EXPORT_PAD + 12, y + 12 + 11);
+      let iy = y + titleH + 8;
+      wrappedItems.forEach((lines, i) => {
+        const badgeCx = EXPORT_PAD + 12 + numW / 2 - 4;
+        const badgeCy = iy + 5;
+        ctx.fillStyle = colors.warn;
+        ctx.beginPath();
+        ctx.arc(badgeCx, badgeCy, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = exportFont(10, true, false);
+        ctx.textAlign = 'center';
+        ctx.fillText(String(i + 1), badgeCx, badgeCy + 4);
+        ctx.textAlign = 'left';
+        iy = drawRichLines(ctx, lines, EXPORT_PAD + 12 + numW, iy + 9, itemLineH, '#6B4A00') - 9 + itemGap;
+      });
+      y += boxH + EXPORT_PAD;
+    } else {
+      y += EXPORT_PAD - 10;
+    }
+
+    return y;
+  }
+
+  function renderMatrixPng() {
+    return new Promise((resolve, reject) => {
+      try {
+        const colors = exportColors();
+        const width = Math.max(EXPORT_MIN_WIDTH, EXPORT_PAD * 2 + EXPORT_ROW_HEADER_W + persons.length * EXPORT_CELL_W);
+
+        const scratch = document.createElement('canvas');
+        scratch.width = width;
+        scratch.height = 10;
+        const height = Math.ceil(drawMatrixContent(scratch.getContext('2d'), width, colors));
+
+        const scale = 2;
+        const canvas = document.createElement('canvas');
+        canvas.width  = width * scale;
+        canvas.height = height * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
+        ctx.fillStyle = colors.ground;
+        ctx.fillRect(0, 0, width, height);
+        drawMatrixContent(ctx, width, colors);
+
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('toBlob failed')), 'image/png');
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function shareMatrix() {
+    const btn = document.getElementById('btn-share');
+    if (persons.length < 2 || btn.disabled) return;
+
+    const original = btn.textContent;
+    const reset = () => { btn.textContent = original; btn.disabled = false; };
+    const flash = (msg) => { btn.textContent = msg; setTimeout(reset, 2000); };
+
+    btn.disabled = true;
+    btn.textContent = t('shareGenerating');
+
+    const isMobile     = window.matchMedia('(max-width: 768px)').matches;
+    const canShareFiles = isMobile && !!navigator.share && !!navigator.canShare;
+
+    if (canShareFiles) {
+      renderMatrixPng().then(blob => {
+        const file = new File([blob], 'sicherungscheck.png', { type: 'image/png' });
+        if (!navigator.canShare({ files: [file] })) throw new Error('file sharing unsupported');
+        return navigator.share({ files: [file], title: t('pageTitle') });
+      }).then(() => flash(t('shareDone')))
+        .catch(err => (err && err.name === 'AbortError') ? reset() : flash(t('shareError')));
+      return;
+    }
+
+    if (navigator.clipboard && window.ClipboardItem) {
+      // Pass a Promise into ClipboardItem and call write() synchronously
+      // (not awaited) so the call still runs inside this click's user
+      // activation — required by stricter (e.g. Safari) implementations.
+      const blobPromise = renderMatrixPng();
+      navigator.clipboard.write([ new ClipboardItem({ 'image/png': blobPromise }) ])
+        .then(() => flash(t('shareCopied')))
+        .catch(() => flash(t('shareError')));
+      return;
+    }
+
+    renderMatrixPng()
+      .then(blob => { downloadBlob(blob, 'sicherungscheck.png'); flash(t('shareDownloaded')); })
+      .catch(() => flash(t('shareError')));
   }
 
   lang = detectLang();
