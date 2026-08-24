@@ -441,25 +441,27 @@
     }
 
     /* Dimension info ("Row = belayers · Column = climbers"), drawn as a
-       real block inside the matrix — a horizontal band above the cell
-       columns, a vertical (rotated) band to the left of the cell rows —
-       rather than as separate prose above the table. */
+       solid dark block inside the matrix — a horizontal band above the
+       column names, a vertical (rotated) band to the left of the row
+       names — rather than as separate prose above the table. */
     .axis-col-label {
       text-align: center;
-      padding: 3px 0 6px;
+      padding: 5px 0;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--muted);
-      border-bottom: 1px dashed var(--border);
+      color: #E5E7EB;
+      background: #3A4152;
+      border-radius: 2px;
     }
     .axis-row-label {
-      width: 20px;
+      width: 22px;
       padding: 0;
       text-align: center;
       vertical-align: middle;
-      border-right: 1px dashed var(--border);
+      background: #3A4152;
+      border-radius: 2px;
     }
     .axis-row-label span {
       display: inline-block;
@@ -470,7 +472,7 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: #E5E7EB;
     }
 
     /* ─── Cells — load-plate aesthetic ──────────── */
@@ -1262,25 +1264,24 @@
     const t2 = document.getElementById('mtable');
     let h = '';
 
-    // Column headers, corner spanning the row-header-name + row-axis-label columns
-    h += '<thead><tr><th colspan="2"></th>';
+    // Dimension info: "climbers" band above the column names, spanning the cell columns
+    h += `<thead><tr><th colspan="2"></th><th colspan="${persons.length}" class="axis-col-label">${t('axisClimbers')}</th></tr>`;
+
+    // Column headers, corner spanning the row-axis-label + row-header-name columns
+    h += '<tr><th colspan="2"></th>';
     persons.forEach(p => {
       h += `<th class="col-hdr"><span class="col-hdr-name">${esc(p.name)}</span><span class="col-hdr-kg">${p.kg} kg</span></th>`;
     });
-    h += '</tr>';
-
-    // Dimension info: "climbers" band spanning the cell columns
-    h += `<tr><th colspan="2"></th><th colspan="${persons.length}" class="axis-col-label">${t('axisClimbers')}</th></tr>`;
-    h += '</thead><tbody>';
+    h += '</tr></thead><tbody>';
 
     // Rows
     persons.forEach((sec, si) => {
       h += '<tr>';
-      h += `<td class="row-hdr"><span class="row-hdr-name">${esc(sec.name)}</span><span class="row-hdr-kg">${sec.kg} kg</span></td>`;
-      // Dimension info: "belayers" band spanning the cell rows, rendered once
+      // Dimension info: "belayers" band left of the row names, spanning the cell rows, rendered once
       if (si === 0) {
         h += `<td rowspan="${persons.length}" class="axis-row-label"><span>${t('axisBelayers')}</span></td>`;
       }
+      h += `<td class="row-hdr"><span class="row-hdr-name">${esc(sec.name)}</span><span class="row-hdr-kg">${sec.kg} kg</span></td>`;
       persons.forEach((clim, ci) => {
         if (si === ci) {
           h += '<td class="mcell mcell-self"><div class="mcell-inner"><span class="mcell-sym">—</span></div></td>';
@@ -1532,8 +1533,19 @@
     y += noteBoxH + 20;
 
     // Matrix table
-    const cellsLeft = EXPORT_PAD + EXPORT_ROW_HEADER_W + EXPORT_AXIS_W;
+    const cellsLeft = EXPORT_PAD + EXPORT_AXIS_W + EXPORT_ROW_HEADER_W;
     const cellsWidth = persons.length * EXPORT_CELL_W;
+    const AXIS_BG = '#3A4152';
+    const AXIS_FG = '#E5E7EB';
+
+    // Dimension info: "climbers" dark block, above the column names, spanning the cell columns
+    ctx.fillStyle = AXIS_BG;
+    fillRoundRect(ctx, cellsLeft, y, cellsWidth, EXPORT_AXIS_W, 2);
+    ctx.fillStyle = AXIS_FG;
+    ctx.font = exportFont(10, true, false);
+    ctx.textAlign = 'center';
+    ctx.fillText(t('axisClimbers').toUpperCase(), cellsLeft + cellsWidth / 2, y + EXPORT_AXIS_W / 2 + 4);
+    y += EXPORT_AXIS_W + 8;
 
     persons.forEach((p, i) => {
       const cx = cellsLeft + i * EXPORT_CELL_W + EXPORT_CELL_W / 2;
@@ -1547,20 +1559,6 @@
     });
     y += 34;
 
-    // Dimension info: "climbers" band spanning the cell columns
-    ctx.strokeStyle = colors.border;
-    ctx.setLineDash([3, 3]);
-    ctx.beginPath();
-    ctx.moveTo(EXPORT_PAD, y + EXPORT_AXIS_W - 2);
-    ctx.lineTo(width - EXPORT_PAD, y + EXPORT_AXIS_W - 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = colors.muted;
-    ctx.font = exportFont(10, true, false);
-    ctx.textAlign = 'center';
-    ctx.fillText(t('axisClimbers').toUpperCase(), cellsLeft + cellsWidth / 2, y + EXPORT_AXIS_W - 8);
-    y += EXPORT_AXIS_W;
-
     const tableTop = y;
     const ratingColor = { ok: colors.ok, warn: colors.warn, crit: colors.crit, danger: colors.danger };
     persons.forEach((sec, si) => {
@@ -1568,10 +1566,10 @@
       ctx.textAlign = 'right';
       ctx.fillStyle = colors.text;
       ctx.font = exportFont(13, true, false);
-      ctx.fillText(sec.name, EXPORT_PAD + EXPORT_ROW_HEADER_W - 10, rowY + EXPORT_CELL_H / 2 - 4);
+      ctx.fillText(sec.name, cellsLeft - 10, rowY + EXPORT_CELL_H / 2 - 4);
       ctx.fillStyle = colors.muted;
       ctx.font = exportFont(10, false, false);
-      ctx.fillText(sec.kg + ' kg', EXPORT_PAD + EXPORT_ROW_HEADER_W - 10, rowY + EXPORT_CELL_H / 2 + 10);
+      ctx.fillText(sec.kg + ' kg', cellsLeft - 10, rowY + EXPORT_CELL_H / 2 + 10);
 
       persons.forEach((clim, ci) => {
         const cellX = cellsLeft + ci * EXPORT_CELL_W;
@@ -1597,22 +1595,17 @@
     });
     const cellsHeight = y - 4 - tableTop;
 
-    // Dimension info: "belayers" band spanning the cell rows (drawn last,
-    // over blank space to the axis column's left — never overlaps a cell)
+    // Dimension info: "belayers" dark block, left of the row names, spanning
+    // the cell rows (drawn last, over blank space — never overlaps a cell)
     ctx.save();
-    ctx.strokeStyle = colors.border;
-    ctx.setLineDash([3, 3]);
-    ctx.beginPath();
-    ctx.moveTo(cellsLeft - 2, tableTop);
-    ctx.lineTo(cellsLeft - 2, tableTop + cellsHeight);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.translate(EXPORT_PAD + EXPORT_ROW_HEADER_W + EXPORT_AXIS_W / 2 - 4, tableTop + cellsHeight / 2);
+    ctx.fillStyle = AXIS_BG;
+    fillRoundRect(ctx, EXPORT_PAD, tableTop, EXPORT_AXIS_W, cellsHeight, 2);
+    ctx.translate(EXPORT_PAD + EXPORT_AXIS_W / 2, tableTop + cellsHeight / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.textAlign = 'center';
-    ctx.fillStyle = colors.muted;
+    ctx.fillStyle = AXIS_FG;
     ctx.font = exportFont(10, true, false);
-    ctx.fillText(t('axisBelayers').toUpperCase(), 0, 0);
+    ctx.fillText(t('axisBelayers').toUpperCase(), 0, 4);
     ctx.restore();
 
     y += 16;
