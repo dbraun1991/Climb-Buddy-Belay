@@ -101,12 +101,15 @@
     .sidebar {
       background: var(--surface);
       border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
       padding: 20px 16px;
       overflow-y: auto;
     }
+    /* Desktop: the collapse toggle is hidden and the <details> stays open   */
+    /* (via the `open` attribute in markup) — visually identical to before  */
+    /* this element existed. Only the mobile media query below turns it     */
+    /* into a real, user-operable disclosure widget.                        */
+    .sidebar-summary { display: none; }
+    .sidebar-body { display: flex; flex-direction: column; gap: 22px; }
     .eyebrow {
       font-size: 10px;
       font-weight: 700;
@@ -478,6 +481,39 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition: none !important; animation: none !important; }
     }
+
+    /* ─── Mobile ─────────────────────────────────── */
+    /* Below this width the fixed sidebar column no longer fits alongside   */
+    /* the matrix, so .layout stacks and the sidebar becomes a real         */
+    /* collapsible <details> (open by default — see index.html markup)     */
+    /* instead of a fixed-width column. */
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+      .sidebar-summary {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        list-style: none;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text);
+      }
+      .sidebar-summary::-webkit-details-marker { display: none; }
+      .sidebar-summary::after {
+        content: '▸';
+        color: var(--muted);
+        transition: transform 0.15s;
+      }
+      details[open] > .sidebar-summary::after { transform: rotate(90deg); }
+      .sidebar-body { margin-top: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -497,6 +533,9 @@
 <div class="layout">
 
   <aside class="sidebar">
+    <details class="sidebar-collapse" open>
+    <summary class="sidebar-summary" data-i18n="sidebarSummary">Gruppe verwalten</summary>
+    <div class="sidebar-body">
     <div>
       <div class="eyebrow" data-i18n="addPersonEyebrow">Person hinzufügen</div>
       <form id="add-form" class="form-stack" onsubmit="addPerson(event)" novalidate>
@@ -550,6 +589,8 @@
         </div>
       </div>
     </div>
+    </div>
+    </details>
   </aside>
 
   <main class="main" id="main">
@@ -608,6 +649,7 @@
       pageTitle: 'Sicherungscheck',
       headerTitle: 'Sicherungscheck',
       headerSub: 'Sicherungsmatrix für Klettergruppen · Lead',
+      sidebarSummary: 'Gruppe verwalten',
       addPersonEyebrow: 'Person hinzufügen',
       nameLabel: 'Name',
       namePlaceholder: 'z. B. Anna',
@@ -660,6 +702,7 @@
       pageTitle: 'Belay Check',
       headerTitle: 'Belay Check',
       headerSub: 'Belay safety matrix for lead-climbing groups',
+      sidebarSummary: 'Manage group',
       addPersonEyebrow: 'Add person',
       nameLabel: 'Name',
       namePlaceholder: 'e.g. Anna',

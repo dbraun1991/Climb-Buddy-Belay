@@ -105,6 +105,16 @@ Everything is in one `<script>` block near the end of the file.
   `render()`/`renderSummary()`/`addPerson()` calls `t()` directly instead.
   Values interpolated into a `t()` template that end up in `innerHTML`
   must be pre-escaped with `esc()` first (see `docs/adr/0009`).
+- **Responsive sidebar**: below 768px (`@media (max-width: 768px)`),
+  `.layout` drops to a single column and the entire `<aside class="sidebar">`
+  content is wrapped in `<details class="sidebar-collapse" open>` with a
+  `<summary class="sidebar-summary" data-i18n="sidebarSummary">` — a real,
+  user-operable disclosure widget on mobile, collapsed on demand, `open` by
+  default so the add-person form is visible on first load. Above 768px
+  `.sidebar-summary` is `display: none` and the `open` attribute is never
+  toggled (nothing can click the hidden summary), so desktop stays visually
+  and behaviorally identical to before this existed — no JS involved, pure
+  CSS + native `<details>`.
 
 Matrix semantics: **row = securing person (Sichernde), column = climbing
 person (Kletternde)**. `classify(sec.kg, clim.kg)` is called with the row
