@@ -6,8 +6,8 @@ Technical reference for coding agents working in this repository.
 
 Climb-Buddy-Belay ("Sicherungscheck") is a single-page browser tool that
 computes a belay-partner safety matrix for a lead-climbing group from
-each person's name and body weight. German/English UI (German default),
-no build step, no backend.
+each person's name and body weight. German/English/French/Spanish UI
+(German default), no build step, no backend.
 
 Live: https://dbraun1991.github.io/Climb-Buddy-Belay/
 
@@ -54,7 +54,7 @@ Relevant ones:
 - `0006` — GitHub Pages hosting
 - `0007` — German-only UI, no i18n layer (superseded by `0009`)
 - `0008` — canvas-drawn icons, no image/SVG/icon-font assets
-- `0009` — inline vanilla-JS i18n (EN/DE), no CDN library, no locale files
+- `0009` — inline vanilla-JS i18n (DE/EN/FR/ES), no CDN library, no locale files
 - `0010` — hand-drawn canvas PNG export (not SVG-foreignObject-to-canvas,
   which Chrome permanently taints — see the ADR before touching `renderMatrixPng`)
 
@@ -108,13 +108,17 @@ Everything is in one `<script>` block near the end of the file.
 - **Decorative graphics**: `drawLogo(id)` and `drawEmpty(id)` paint the
   header carabiner icon and empty-state figure-8 device onto `<canvas>`
   elements using the Canvas 2D API. No image assets exist.
-- **i18n**: `TRANSLATIONS` (`{ de: {...}, en: {...} }`) plus `t(key, vars)`
-  for lookup/`{{var}}` interpolation, `detectLang()` (URL `?lang=` then
-  `navigator.language`), and `applyStaticTranslations()`/`setLang(lang)`
-  for the switcher. Static markup opts in via `data-i18n="key"` (sets
-  `innerHTML`) or `data-i18n-placeholder="key"`; anything rendered by
-  `render()`/`renderSummary()`/`addPerson()` calls `t()` directly instead.
-  Values interpolated into a `t()` template that end up in `innerHTML`
+- **i18n**: `TRANSLATIONS` (`{ de: {...}, en: {...}, fr: {...}, es: {...} }`,
+  languages listed in `SUPPORTED_LANGS`) plus `t(key, vars)` for lookup/
+  `{{var}}` interpolation, `detectLang()` (URL `?lang=` then
+  `navigator.language`, matched against `SUPPORTED_LANGS`), and
+  `applyStaticTranslations()`/`setLang(lang)` for the switcher — a native
+  `<select id="lang-select">` (flag emoji + code per `<option>`), not
+  buttons; `setLang` just sets `.value`. Static markup opts in via
+  `data-i18n="key"` (sets `innerHTML`) or `data-i18n-placeholder="key"`;
+  anything rendered by `render()`/`renderSummary()`/`addPerson()` calls
+  `t()` directly instead. Values interpolated into a `t()` template that
+  end up in `innerHTML`
   must be pre-escaped with `esc()` first (see `docs/adr/0009`).
 - **Responsive sidebar**: below 768px (`@media (max-width: 768px)`),
   `.layout` drops to a single column and the entire `<aside class="sidebar">`
@@ -178,25 +182,28 @@ consistent:
 
 1. `classify()` in the `<script>` block (the actual logic)
 2. The legend in the sidebar — `legendOk`/`legendWarn`/`legendCrit`/
-   `legendDanger` in **both** `TRANSLATIONS.de` and `TRANSLATIONS.en`
+   `legendDanger` in **all four** `TRANSLATIONS` languages
 3. The table in `README.md`
 
 If thresholds or colors change, update all of these. The ≥15 kg gear-hint
 (assisted-braking devices, rope-diameter note) is a separate, static
 threshold check in `renderSummary()` (`hasHeavyMismatch`) and its own
-copy block (`gearHint1`/`2`/`3` in both languages) — check it too when
+copy block (`gearHint1`/`2`/`3` in all four languages) — check it too when
 touching the model.
 
 ## Conventions
 
-- **Language**: the UI supports German and English via the inline
-  `TRANSLATIONS` table (see `docs/adr/0009`); German remains the default
-  (`detectLang()` falls back to `de` unless the browser or `?lang=`
-  requests English). Every new user-facing string needs an entry in
-  **both** `TRANSLATIONS.de` and `TRANSLATIONS.en` — don't hardcode a new
-  string into markup or a template literal. Keep new German strings
-  German and consistent in tone/formality (informal "du" is not used;
-  the copy is neutral/instructional) with existing copy — see `0007`.
+- **Language**: the UI supports German, English, French, and Spanish via
+  the inline `TRANSLATIONS` table (see `docs/adr/0009`); German remains
+  the default (`detectLang()` falls back to `de` unless the browser or
+  `?lang=` requests one of the others). Every new user-facing string
+  needs an entry in **all four** `TRANSLATIONS` languages — don't
+  hardcode a new string into markup or a template literal. Keep new
+  German strings German and consistent in tone/formality (informal "du"
+  is not used; the copy is neutral/instructional) with existing copy —
+  see `0007`; keep French/Spanish similarly neutral/formal (no "tu"/"vous"
+  ambiguity — impersonal or infinitive phrasing where natural, matching
+  the existing FR/ES copy's register).
 - **No comments explaining what code does** — the existing code has none;
   match that style. Only add a comment for a genuinely non-obvious
   constraint (the existing canvas-drawing functions have a couple of

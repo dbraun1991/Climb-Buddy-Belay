@@ -62,32 +62,24 @@
       color: #9AA4B4;
       letter-spacing: 0.04em;
     }
-    .lang-switch {
+    .lang-select {
       margin-left: auto;
-      display: flex;
-      gap: 4px;
       flex-shrink: 0;
-    }
-    .lang-btn {
-      background: none;
+      background: #1A1F29;
       border: 1px solid #3A4152;
-      color: #9AA4B4;
-      font-size: 11px;
+      color: #E5E7EB;
+      font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.06em;
-      padding: 4px 9px;
+      letter-spacing: 0.02em;
+      padding: 5px 8px;
       border-radius: 3px;
       cursor: pointer;
       font-family: inherit;
-      transition: background 0.1s, color 0.1s, border-color 0.1s;
+      transition: border-color 0.1s;
     }
-    .lang-btn:hover { color: #fff; border-color: #565F73; }
-    .lang-btn:focus-visible { outline: 2px solid var(--heat); outline-offset: 2px; }
-    .lang-btn.active {
-      background: var(--heat);
-      color: #141820;
-      border-color: var(--heat);
-    }
+    .lang-select:hover { border-color: #565F73; }
+    .lang-select:focus-visible { outline: 2px solid var(--heat); outline-offset: 2px; }
+    .lang-select option { background: #1A1F29; color: #E5E7EB; }
 
     /* ─── Layout ─────────────────────────────────── */
     .layout {
@@ -606,10 +598,12 @@
     <div class="hdr-title" data-i18n="headerTitle">Sicherungscheck</div>
     <div class="hdr-sub" data-i18n="headerSub">Sicherungsmatrix für Klettergruppen · Lead</div>
   </div>
-  <div class="lang-switch" role="group" aria-label="Sprache / Language">
-    <button type="button" class="lang-btn" id="lang-de" onclick="setLang('de')">DE</button>
-    <button type="button" class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
-  </div>
+  <select class="lang-select" id="lang-select" onchange="setLang(this.value)" aria-label="Sprache / Language / Langue / Idioma">
+    <option value="de">🇩🇪 DE</option>
+    <option value="en">🇬🇧 EN</option>
+    <option value="fr">🇫🇷 FR</option>
+    <option value="es">🇪🇸 ES</option>
+  </select>
 </header>
 
 <div class="layout">
@@ -864,14 +858,143 @@
       footerLicenseTitle: 'MIT License (full text)',
       footerLicense: 'MIT License',
     },
+    fr: {
+      pageTitle: 'Contrôle d\'assurage',
+      headerTitle: 'Contrôle d\'assurage',
+      headerSub: 'Matrice d\'assurage pour groupes d\'escalade en tête',
+      sidebarSummary: 'Gérer le groupe',
+      addPersonEyebrow: 'Ajouter une personne',
+      nameLabel: 'Nom',
+      namePlaceholder: 'p. ex. Anna',
+      weightLabel: 'Poids (kg)',
+      addButton: 'Ajouter au groupe',
+      importEyebrow: 'Coller plusieurs personnes',
+      importPlaceholder: 'Anna, 55\nBen, 90',
+      importButton: 'Importer',
+      importLineError: 'Ligne {{line}} : {{msg}}',
+      errFormat: 'Format : nom, poids (p. ex. « Anna, 55 »)',
+      groupCountOne: 'Groupe (1 personne)',
+      groupCountOther: 'Groupe ({{n}} personnes)',
+      noOneYet: 'Personne pour l\'instant.',
+      removePerson: 'Retirer {{name}}',
+      removeTitle: 'Retirer',
+      legendTitle: 'Légende',
+      legendOk: 'jusqu\'à 10 kg de moins — sûr',
+      legendWarn: '10 – 15 kg de moins — limite',
+      legendCrit: '15 – 20 kg de moins — critique',
+      legendDanger: 'plus de 20 kg de moins — déconseillé',
+      emptyTitle: 'Groupe vide',
+      emptyText: 'Ajoutez au moins deux personnes avec leur poids — la matrice d\'assurage apparaîtra alors.',
+      matrixLabel: 'Matrice d\'assurage',
+      axisBelayers: 'Assureurs',
+      axisClimbers: 'Grimpeurs',
+      shareButton: 'Partager',
+      shareGenerating: 'Génération de l\'image…',
+      shareDone: 'Partagé',
+      shareCopied: 'Copié dans le presse-papiers',
+      shareDownloaded: 'Téléchargé',
+      shareError: 'Échec du partage',
+      researchNote: 'Les études montrent que dans un environnement à faible friction — par exemple un tracé de corde rectiligne en salle — la différence de poids optimale au sein d\'une cordée est de <strong>± 5 kg</strong>.',
+      gearHintTitle: 'À noter également',
+      gearHint1: 'Les grimpeurs en tête portent du matériel supplémentaire — dégaines, corde et coinceurs peuvent ajouter plusieurs kilogrammes. Le poids réel en cas de chute est donc plus élevé que celui indiqué ici.',
+      gearHint2: 'Avec une corde plus épaisse, les valeurs de compensation sont nettement plus élevées pour la plupart des appareils qu\'avec une corde fine.',
+      gearHint3: 'En cas de grande différence de poids, des dispositifs d\'assurage assisté tels que <em>Mammut Assist</em>, <em>Edelrid Ohmega</em> ou <em>Raed Zead</em> sont recommandés, car ils génèrent une force de freinage supplémentaire en cas de chute.',
+      errNameRequired: 'Veuillez saisir un nom.',
+      errWeightRange: 'Le poids doit être compris entre 30 et 200 kg.',
+      errDuplicate: '« {{name}} » est déjà dans le groupe.',
+      canBelayAll: 'Peut assurer tout le monde',
+      canClimbWithAll: 'Peut grimper en tête avec tout le monde',
+      nobody: 'personne',
+      equalWeight: 'Toutes les personnes pèsent le même poids — s\'assurer mutuellement ne pose aucun problème, dans les deux sens.',
+      verdict_ok_label: 'sans problème',
+      verdict_ok_detail: 'la différence de {{diff}} kg reste dans la plage sûre',
+      verdict_warn_label: 'limite',
+      verdict_warn_detail: 'la différence de {{diff}} kg dépasse de peu la recommandation',
+      verdict_crit_label: 'critique',
+      verdict_crit_detail: 'la différence de {{diff}} kg dépasse nettement la recommandation',
+      verdict_danger_label: 'déconseillé',
+      verdict_danger_detail: 'la différence de {{diff}} kg est trop importante',
+      summaryHeavyCanBelay: '<strong>{{heavy}}</strong> ({{heavyKg}} kg) peut assurer <strong>{{light}}</strong> ({{lightKg}} kg), car {{heavy}} pèse {{diff}} kg de plus.',
+      summaryLightCanBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) peut assurer <strong>{{heavy}}</strong> ({{heavyKg}} kg) — {{verdict}}.',
+      summaryLightCannotBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) ne peut pas assurer <strong>{{heavy}}</strong> ({{heavyKg}} kg) sans dispositif d\'assurage assisté — {{verdict}}.',
+      footerGithubTitle: 'Dépôt du code source de Climb-Buddy-Belay',
+      footerLicenseTitle: 'Licence MIT (texte complet)',
+      footerLicense: 'Licence MIT',
+    },
+    es: {
+      pageTitle: 'Control de aseguramiento',
+      headerTitle: 'Control de aseguramiento',
+      headerSub: 'Matriz de aseguramiento para grupos de escalada de punta',
+      sidebarSummary: 'Gestionar grupo',
+      addPersonEyebrow: 'Añadir persona',
+      nameLabel: 'Nombre',
+      namePlaceholder: 'p. ej. Anna',
+      weightLabel: 'Peso (kg)',
+      addButton: 'Añadir al grupo',
+      importEyebrow: 'Pegar varias personas',
+      importPlaceholder: 'Anna, 55\nBen, 90',
+      importButton: 'Importar',
+      importLineError: 'Línea {{line}}: {{msg}}',
+      errFormat: 'Formato: nombre, peso (p. ej. "Anna, 55")',
+      groupCountOne: 'Grupo (1 persona)',
+      groupCountOther: 'Grupo ({{n}} personas)',
+      noOneYet: 'Nadie todavía.',
+      removePerson: 'Eliminar a {{name}}',
+      removeTitle: 'Eliminar',
+      legendTitle: 'Leyenda',
+      legendOk: 'hasta 10 kg más ligero — seguro',
+      legendWarn: '10 – 15 kg más ligero — límite',
+      legendCrit: '15 – 20 kg más ligero — crítico',
+      legendDanger: 'más de 20 kg más ligero — no recomendado',
+      emptyTitle: 'Grupo vacío',
+      emptyText: 'Añade al menos dos personas con su peso — entonces aparecerá la matriz de aseguramiento.',
+      matrixLabel: 'Matriz de aseguramiento',
+      axisBelayers: 'Aseguradores',
+      axisClimbers: 'Escaladores',
+      shareButton: 'Compartir',
+      shareGenerating: 'Generando imagen…',
+      shareDone: 'Compartido',
+      shareCopied: 'Copiado al portapapeles',
+      shareDownloaded: 'Descargado',
+      shareError: 'Error al compartir',
+      researchNote: 'Los estudios muestran que, en un entorno de baja fricción — por ejemplo, un trazado de cuerda recto en el rocódromo —, la diferencia de peso óptima en una cordada es de <strong>± 5 kg</strong>.',
+      gearHintTitle: 'También a tener en cuenta',
+      gearHint1: 'Quien va de primero lleva material adicional — cintas exprés, cuerda y fisureros pueden añadir varios kilogramos. El peso real en caso de caída es, por tanto, mayor que el indicado aquí.',
+      gearHint2: 'Con una cuerda más gruesa, los valores de compensación son notablemente más altos en la mayoría de los aparatos que con una cuerda fina.',
+      gearHint3: 'Ante una gran diferencia de peso, se recomiendan dispositivos de frenado asistido como <em>Mammut Assist</em>, <em>Edelrid Ohmega</em> o <em>Raed Zead</em>, ya que generan fuerza de frenado adicional en caso de caída.',
+      errNameRequired: 'Introduce un nombre.',
+      errWeightRange: 'El peso debe estar entre 30 y 200 kg.',
+      errDuplicate: '"{{name}}" ya está en el grupo.',
+      canBelayAll: 'Puede asegurar a todos',
+      canClimbWithAll: 'Puede escalar de primero con todos',
+      nobody: 'nadie',
+      equalWeight: 'Todas las personas pesan lo mismo — asegurarse mutuamente no supone ningún problema en ninguna dirección.',
+      verdict_ok_label: 'sin problema',
+      verdict_ok_detail: 'la diferencia de {{diff}} kg está dentro del rango seguro',
+      verdict_warn_label: 'límite',
+      verdict_warn_detail: 'la diferencia de {{diff}} kg supera ligeramente la recomendación',
+      verdict_crit_label: 'crítico',
+      verdict_crit_detail: 'la diferencia de {{diff}} kg supera claramente la recomendación',
+      verdict_danger_label: 'no recomendado',
+      verdict_danger_detail: 'la diferencia de {{diff}} kg es demasiado grande',
+      summaryHeavyCanBelay: '<strong>{{heavy}}</strong> ({{heavyKg}} kg) puede asegurar a <strong>{{light}}</strong> ({{lightKg}} kg), ya que {{heavy}} pesa {{diff}} kg más.',
+      summaryLightCanBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) puede asegurar a <strong>{{heavy}}</strong> ({{heavyKg}} kg) — {{verdict}}.',
+      summaryLightCannotBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) no puede asegurar a <strong>{{heavy}}</strong> ({{heavyKg}} kg) sin un dispositivo de frenado asistido — {{verdict}}.',
+      footerGithubTitle: 'Repositorio de código fuente de Climb-Buddy-Belay',
+      footerLicenseTitle: 'Licencia MIT (texto completo)',
+      footerLicense: 'Licencia MIT',
+    },
   };
 
   let lang = 'de';
 
+  const SUPPORTED_LANGS = ['de', 'en', 'fr', 'es'];
+
   function detectLang() {
     const fromUrl = new URLSearchParams(location.search).get('lang');
-    if (fromUrl === 'de' || fromUrl === 'en') return fromUrl;
-    return (navigator.language || '').toLowerCase().startsWith('en') ? 'en' : 'de';
+    if (SUPPORTED_LANGS.includes(fromUrl)) return fromUrl;
+    const nav = (navigator.language || '').toLowerCase();
+    return SUPPORTED_LANGS.find(l => nav.startsWith(l)) || 'de';
   }
 
   function t(key, vars) {
@@ -892,8 +1015,7 @@
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
       el.title = t(el.getAttribute('data-i18n-title'));
     });
-    document.getElementById('lang-de').classList.toggle('active', lang === 'de');
-    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+    document.getElementById('lang-select').value = lang;
   }
 
   function setLang(newLang) {

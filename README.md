@@ -44,7 +44,7 @@ Der "Teilen"-Button über der Matrix exportiert Matrix, Zusammenfassung und Hinw
 
 ## Sprache / Language
 
-Umschaltbar über die DE/EN-Buttons oben rechts, oder direkt per URL: `?lang=en` bzw. `?lang=de`. Standard ist Deutsch.
+Verfügbar: Deutsch, Englisch, Französisch, Spanisch — umschaltbar über das Dropdown oben rechts, oder direkt per URL: `?lang=de`, `?lang=en`, `?lang=fr`, `?lang=es`. Standard ist Deutsch.
 
 ## Hintergrund
 

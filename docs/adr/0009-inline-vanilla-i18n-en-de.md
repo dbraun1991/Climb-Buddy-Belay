@@ -49,3 +49,13 @@ or any other storage, consistent with [0003](0003-in-memory-state-no-persistence
   keys) but wouldn't scale gracefully to many languages or complex plural
   rules. If that need arises, revisit this decision rather than
   hand-rolling more i18n infrastructure inline.
+
+## Update (2026-08-25)
+French and Spanish were added (`TRANSLATIONS.fr`/`.es`, `SUPPORTED_LANGS`),
+confirming the mechanism scales the way this ADR predicted — two more
+objects, no build step, no new file. The header switcher itself changed
+from one `.lang-btn` per language to a single native `<select>`
+(flag emoji + code per `<option>`): four buttons started crowding the
+header, and a `<select>` scales to more languages later without needing
+more header width. Still no JS dropdown widget — native element, same
+zero-dependency stance.
