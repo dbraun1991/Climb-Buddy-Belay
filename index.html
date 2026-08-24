@@ -180,9 +180,16 @@
       gap: 8px;
       padding: 7px 8px;
       background: var(--ground);
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       border-radius: 3px;
+      cursor: grab;
+      transition: opacity 0.1s, border-color 0.1s, background 0.1s;
     }
+    .pitem:active { cursor: grabbing; }
+    .pitem-dragging { opacity: 0.4; }
+    .pitem-dragover { border-color: var(--accent); background: #EFF6FF; }
+    .pinfo-wrap { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .pdrag { flex-shrink: 0; color: var(--border-s); font-size: 12px; line-height: 1; user-select: none; }
     .pinfo { display: flex; flex-direction: column; min-width: 0; }
     .pname { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pkg {
@@ -974,6 +981,46 @@
     render();
   }
 
+  /* Drag-and-drop reordering — native HTML5 DnD via inline event handler   */
+  /* attributes, consistent with the app's onclick/onsubmit convention     */
+  /* (see Conventions in AGENTS.md). Mouse/trackpad only: HTML5 DnD has no  */
+  /* built-in touch equivalent, so this doesn't work on mobile.            */
+  let dragSrcIndex = null;
+
+  function personDragStart(e, i) {
+    dragSrcIndex = i;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(i));
+    e.currentTarget.classList.add('pitem-dragging');
+  }
+
+  function personDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('pitem-dragover');
+  }
+
+  function personDragLeave(e) {
+    e.currentTarget.classList.remove('pitem-dragover');
+  }
+
+  function personDrop(e, i) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('pitem-dragover');
+    const from = dragSrcIndex !== null ? dragSrcIndex : parseInt(e.dataTransfer.getData('text/plain'), 10);
+    dragSrcIndex = null;
+    if (isNaN(from) || from === i) return;
+    const [moved] = persons.splice(from, 1);
+    persons.splice(i, 0, moved);
+    render();
+  }
+
+  function personDragEnd(e) {
+    e.currentTarget.classList.remove('pitem-dragging');
+    document.querySelectorAll('.pitem-dragover').forEach(el => el.classList.remove('pitem-dragover'));
+    dragSrcIndex = null;
+  }
+
   /* Strict "Name, kg" per line — one deliberately simple format, not a   */
   /* general CSV/JSON import. Each line is validated with the same rules */
   /* as addPerson(); bad lines are skipped and reported, not fatal.      */
@@ -1063,10 +1110,18 @@
       list.innerHTML = `<div class="plist-empty">${t('noOneYet')}</div>`;
     } else {
       list.innerHTML = persons.map((p, i) => `
-        <div class="pitem">
-          <div class="pinfo">
-            <span class="pname">${esc(p.name)}</span>
-            <span class="pkg">${p.kg} kg</span>
+        <div class="pitem" draggable="true"
+          ondragstart="personDragStart(event, ${i})"
+          ondragover="personDragOver(event)"
+          ondragleave="personDragLeave(event)"
+          ondrop="personDrop(event, ${i})"
+          ondragend="personDragEnd(event)">
+          <div class="pinfo-wrap">
+            <span class="pdrag" aria-hidden="true">⠿</span>
+            <div class="pinfo">
+              <span class="pname">${esc(p.name)}</span>
+              <span class="pkg">${p.kg} kg</span>
+            </div>
           </div>
           <button class="btn-del" onclick="removePerson(${i})" aria-label="${esc(t('removePerson', { name: p.name }))}" title="${esc(t('removeTitle'))}">×</button>
         </div>

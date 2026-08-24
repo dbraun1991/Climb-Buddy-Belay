@@ -79,6 +79,15 @@ Everything is in one `<script>` block near the end of the file.
   anywhere, the pasted text just seeds `persons` the same as manual entry
   would, so it doesn't conflict with
   [`docs/adr/0003`](docs/adr/0003-in-memory-state-no-persistence.md).
+  `personDrop(e, i)` reorders (native HTML5 drag-and-drop —
+  `personDragStart`/`personDragOver`/`personDragLeave`/`personDrop`/
+  `personDragEnd`, wired via inline `ondragstart`/etc. attributes on each
+  `.pitem` like the rest of the app's event handlers, not
+  `addEventListener`) — `persons.splice()` out then back in at the drop
+  index, then `render()`. Row/column order in the matrix always follows
+  `persons` array order, so reordering the sidebar list reorders the
+  matrix too, for free. Mouse/trackpad only — HTML5 DnD has no built-in
+  touch equivalent, so this doesn't work on mobile.
 - **Domain logic**:
   - `classify(secKg, climKg)` — buckets `climKg - secKg` into
     `'ok' | 'warn' | 'crit' | 'danger'` using fixed thresholds
