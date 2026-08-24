@@ -259,6 +259,18 @@
     .summary-line .rating-crit   { color: var(--crit);   font-weight: 700; }
     .summary-line .rating-danger { color: var(--danger); font-weight: 700; }
 
+    .summary-groups {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-bottom: 8px;
+      margin-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .summary-group-line { font-size: 13px; color: var(--text); line-height: 1.45; }
+    .summary-group-line strong { font-weight: 700; }
+    .summary-group-line em { color: var(--muted); font-style: italic; }
+
     /* Research note */
     .research-note {
       display: flex;
@@ -675,12 +687,33 @@
     );
     hintEl.style.display = hasHeavyMismatch ? '' : 'none';
 
+    // Wer kann alle sichern / mit allen vorsteigen (row/column ok-check)
+    const canBelayAll = persons.filter(sec =>
+      persons.every(clim => sec === clim || classify(sec.kg, clim.kg) === 'ok')
+    );
+    const canClimbWithAll = persons.filter(clim =>
+      persons.every(sec => sec === clim || classify(sec.kg, clim.kg) === 'ok')
+    );
+
+    const groupLine = (label, list) => `
+      <div class="summary-group-line">
+        <strong>${label}:</strong> ${list.length ? list.map(p => esc(p.name)).join(', ') : '<em>niemand</em>'}
+      </div>
+    `;
+
+    const groupsBlock = `
+      <div class="summary-groups">
+        ${groupLine('Kann alle sichern', canBelayAll)}
+        ${groupLine('Kann mit allen vorsteigen', canClimbWithAll)}
+      </div>
+    `;
+
     const sorted = [...persons].sort((a, b) => a.kg - b.kg);
     const light  = sorted[0];
     const heavy  = sorted[sorted.length - 1];
 
     if (light === heavy || light.kg === heavy.kg) {
-      el.innerHTML = '<div class="summary-line">Alle Personen wiegen gleich viel — gegenseitiges Sichern ist in beide Richtungen unbedenklich.</div>';
+      el.innerHTML = groupsBlock + '<div class="summary-line">Alle Personen wiegen gleich viel — gegenseitiges Sichern ist in beide Richtungen unbedenklich.</div>';
       return;
     }
 
@@ -697,13 +730,14 @@
     const canReverse = ratingReverse === 'ok';
 
     el.innerHTML = `
+      ${groupsBlock}
       <div class="summary-line">
         <strong>${esc(heavy.name)}</strong> (${heavy.kg} kg) kann <strong>${esc(light.name)}</strong> (${light.kg} kg) sichern,
         da ${esc(heavy.name)} ${diff} kg schwerer ist.
       </div>
       <div class="summary-line">
         <strong>${esc(light.name)}</strong> (${light.kg} kg) kann <strong>${esc(heavy.name)}</strong> (${heavy.kg} kg)
-        ${canReverse ? 'sichern' : 'nicht sichern'} — ${VERDICT[ratingReverse]}.
+        ${canReverse ? 'sichern' : 'nicht ohne Bremsassistenten sichern'} — ${VERDICT[ratingReverse]}.
       </div>
     `;
   }
