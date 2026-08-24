@@ -298,24 +298,56 @@
     /* Gear hint */
     .gear-hint {
       display: flex;
-      align-items: baseline;
-      gap: 8px;
-      padding: 10px 14px;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px 14px;
       background: #FEF3C7;
+      border: 1px solid #F2D477;
       border-left: 3px solid var(--warn);
       border-radius: 0 3px 3px 0;
       font-size: 13px;
       color: #6B4A00;
       line-height: 1.45;
     }
+    .gear-hint-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8A5B00;
+    }
     .gear-hint-icon {
       font-size: 13px;
       flex-shrink: 0;
       color: var(--warn);
     }
-    .gear-hint-devices {
-      display: block;
-      margin-top: 5px;
+    .gear-hint-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      list-style: none;
+    }
+    .gear-hint-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+    }
+    .gear-hint-num {
+      flex-shrink: 0;
+      width: 17px;
+      height: 17px;
+      margin-top: 1px;
+      border-radius: 50%;
+      background: var(--warn);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* ─── Matrix table ───────────────────────────── */
@@ -504,12 +536,21 @@
       </div>
       <div class="summary" id="summary"></div>
       <div class="gear-hint" id="gear-hint" style="display:none">
-        <span class="gear-hint-icon">⚠</span>
-        <span>
-          Vorsteigende tragen zusätzliches Material — Expressschlingen, Seil und Klemmgeräte können mehrere Kilogramm hinzufügen. Das tatsächliche Gewicht im Sturz liegt entsprechend höher als hier angegeben.
-          <span class="gear-hint-devices">Mit dickerem Seil fallen die Kompensationswerte bei den meisten Geräten deutlich höher aus als mit dünnem Seil.</span>
-          <span class="gear-hint-devices">Bei großem Gewichtsunterschied empfehlen sich Bremsassistenten wie <em>Mammut Assist</em>, <em>Edelrid Ohmega</em> oder <em>Raed Zead</em>, die im Sturzfall zusätzliche Bremskraft erzeugen.</span>
-        </span>
+        <div class="gear-hint-title"><span class="gear-hint-icon">⚠</span> Zusätzlich zu beachten</div>
+        <ul class="gear-hint-list">
+          <li class="gear-hint-item">
+            <span class="gear-hint-num">1</span>
+            <span>Vorsteigende tragen zusätzliches Material — Expressschlingen, Seil und Klemmgeräte können mehrere Kilogramm hinzufügen. Das tatsächliche Gewicht im Sturz liegt entsprechend höher als hier angegeben.</span>
+          </li>
+          <li class="gear-hint-item">
+            <span class="gear-hint-num">2</span>
+            <span>Mit dickerem Seil fallen die Kompensationswerte bei den meisten Geräten deutlich höher aus als mit dünnem Seil.</span>
+          </li>
+          <li class="gear-hint-item">
+            <span class="gear-hint-num">3</span>
+            <span>Bei großem Gewichtsunterschied empfehlen sich Bremsassistenten wie <em>Mammut Assist</em>, <em>Edelrid Ohmega</em> oder <em>Raed Zead</em>, die im Sturzfall zusätzliche Bremskraft erzeugen.</span>
+          </li>
+        </ul>
       </div>
     </div>
   </main>
