@@ -35,7 +35,10 @@ Mehrere Personen lassen sich auch auf einmal einfügen: eine Zeile pro Person im
 
 ```
 Anna, 55
-Ben, 90
+Ben, 62
+Luisa, 67
+Karl, 73
+Tom, 81
 ```
 
 ## Teilen
