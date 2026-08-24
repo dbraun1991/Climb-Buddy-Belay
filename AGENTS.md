@@ -88,6 +88,18 @@ Everything is in one `<script>` block near the end of the file.
   `persons` array order, so reordering the sidebar list reorders the
   matrix too, for free. Mouse/trackpad only — HTML5 DnD has no built-in
   touch equivalent, so this doesn't work on mobile.
+  `sortPersons(key)` (`'name'` or `'kg'`) is the other way to reorder —
+  a one-off `persons.sort()`, not a maintained order: it doesn't
+  re-apply itself on the next `addPerson`/`importPersons`, and a manual
+  drag afterward is free to break it, same relationship a spreadsheet
+  column sort has to manual row drags. Module-level `sortState = {key,
+  dir}` tracks the last sort so a second click on the same button
+  flips direction instead of re-sorting ascending; switching keys resets
+  to ascending. `updateSortButtons()` (called from `render()`) reflects
+  `sortState` on the two `#sort-btn-name`/`#sort-btn-kg` buttons (`.active`
+  class, ▲/▼ in a separate `.sort-arrow` span — kept out of the
+  `data-i18n` target so a language switch doesn't clobber it) and
+  disables both below 2 people, matching `#btn-share`'s guard.
 - **Domain logic**:
   - `classify(secKg, climKg)` — buckets `climKg - secKg` into
     `'ok' | 'warn' | 'crit' | 'danger'` using fixed thresholds

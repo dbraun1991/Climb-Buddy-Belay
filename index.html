@@ -208,6 +208,24 @@
     .btn-del:hover { color: var(--danger); background: #FEE2E2; }
     .btn-del:focus-visible { outline: 2px solid var(--danger); outline-offset: 2px; }
     .plist-empty { font-size: 12px; color: var(--muted); font-style: italic; }
+    .sort-controls { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .sort-label { font-size: 11px; color: var(--muted); }
+    .sort-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.1s, color 0.1s, background 0.1s;
+    }
+    .sort-btn:hover { border-color: var(--border-s); color: var(--text); }
+    .sort-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .sort-btn:disabled { opacity: 0.5; cursor: default; }
+    .sort-arrow { display: inline-block; margin-left: 2px; }
 
     /* Legend */
     .legend-wrap { margin-top: auto; padding-top: 18px; border-top: 1px solid var(--border); }
@@ -655,6 +673,15 @@
       <div class="plist" id="plist">
         <div class="plist-empty">Noch niemand dabei.</div>
       </div>
+      <div class="sort-controls">
+        <span class="sort-label" data-i18n="sortLabel">Sortieren:</span>
+        <button type="button" class="sort-btn" id="sort-btn-name" onclick="sortPersons('name')" disabled>
+          <span data-i18n="sortByName">Name</span><span class="sort-arrow" id="sort-arrow-name"></span>
+        </button>
+        <button type="button" class="sort-btn" id="sort-btn-kg" onclick="sortPersons('kg')" disabled>
+          <span data-i18n="sortByWeight">Gewicht</span><span class="sort-arrow" id="sort-arrow-kg"></span>
+        </button>
+      </div>
     </div>
 
     <div class="legend-wrap">
@@ -760,6 +787,9 @@
       noOneYet: 'Noch niemand dabei.',
       removePerson: '{{name}} entfernen',
       removeTitle: 'Entfernen',
+      sortLabel: 'Sortieren:',
+      sortByName: 'Name',
+      sortByWeight: 'Gewicht',
       legendTitle: 'Legende',
       legendOk: 'bis 10 kg leichter — sicher',
       legendWarn: '10 – 15 kg leichter — grenzwertig',
@@ -823,6 +853,9 @@
       noOneYet: 'Nobody yet.',
       removePerson: 'Remove {{name}}',
       removeTitle: 'Remove',
+      sortLabel: 'Sort:',
+      sortByName: 'Name',
+      sortByWeight: 'Weight',
       legendTitle: 'Legend',
       legendOk: 'up to 10 kg lighter — safe',
       legendWarn: '10 – 15 kg lighter — borderline',
@@ -886,6 +919,9 @@
       noOneYet: 'Personne pour l\'instant.',
       removePerson: 'Retirer {{name}}',
       removeTitle: 'Retirer',
+      sortLabel: 'Trier :',
+      sortByName: 'Nom',
+      sortByWeight: 'Poids',
       legendTitle: 'Légende',
       legendOk: 'jusqu\'à 10 kg de moins — sûr',
       legendWarn: '10 – 15 kg de moins — limite',
@@ -949,6 +985,9 @@
       noOneYet: 'Nadie todavía.',
       removePerson: 'Eliminar a {{name}}',
       removeTitle: 'Eliminar',
+      sortLabel: 'Ordenar:',
+      sortByName: 'Nombre',
+      sortByWeight: 'Peso',
       legendTitle: 'Leyenda',
       legendOk: 'hasta 10 kg más ligero — seguro',
       legendWarn: '10 – 15 kg más ligero — límite',
@@ -1151,6 +1190,33 @@
     dragSrcIndex = null;
   }
 
+  /* Sorting is a one-off action, not a maintained order: it doesn't       */
+  /* re-apply itself when a person is later added/imported, and a manual   */
+  /* drag afterward is free to break it — same relationship a spreadsheet  */
+  /* column sort has to manual row reordering. */
+  let sortState = { key: null, dir: 1 };
+
+  function sortPersons(key) {
+    if (persons.length < 2) return;
+    sortState.dir = sortState.key === key ? sortState.dir * -1 : 1;
+    sortState.key = key;
+    persons.sort((a, b) => key === 'name'
+      ? sortState.dir * a.name.localeCompare(b.name, lang, { sensitivity: 'base' })
+      : sortState.dir * (a.kg - b.kg));
+    render();
+  }
+
+  function updateSortButtons() {
+    const disabled = persons.length < 2;
+    [['name', 'sort-btn-name', 'sort-arrow-name'], ['kg', 'sort-btn-kg', 'sort-arrow-kg']].forEach(([key, btnId, arrowId]) => {
+      const btn = document.getElementById(btnId);
+      const active = sortState.key === key;
+      btn.disabled = disabled;
+      btn.classList.toggle('active', active);
+      document.getElementById(arrowId).textContent = active ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
+    });
+  }
+
   /* Strict "Name, kg" per line — one deliberately simple format, not a   */
   /* general CSV/JSON import. Each line is validated with the same rules */
   /* as addPerson(); bad lines are skipped and reported, not fatal.      */
@@ -1257,6 +1323,7 @@
         </div>
       `).join('');
     }
+    updateSortButtons();
 
     // Matrix visibility
     const showMatrix = n >= 2;
