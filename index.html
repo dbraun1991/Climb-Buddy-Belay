@@ -250,13 +250,19 @@
 
     /* Matrix */
     .matrix-wrap { display: flex; flex-direction: column; gap: 14px; }
+    /* Sits directly under the header, above .layout — not inside .sidebar
+       or .main — so it's visible without scrolling on any viewport,
+       including mobile where the sidebar <details> is open by default and
+       would otherwise push it below the fold. */
     .matrix-meta {
       display: flex;
       align-items: baseline;
       gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 20px;
       flex-shrink: 0;
+      padding: 14px 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
     }
     .matrix-label {
       font-size: 10px;
@@ -608,6 +614,11 @@
   </select>
 </header>
 
+<div class="matrix-meta">
+  <span class="matrix-label" data-i18n="matrixLabel">Sicherungsmatrix</span>
+  <button type="button" class="btn-share" id="btn-share" onclick="shareMatrix()" data-i18n="shareButton" disabled>Teilen</button>
+</div>
+
 <div class="layout">
 
   <aside class="sidebar">
@@ -672,11 +683,6 @@
   </aside>
 
   <main class="main" id="main">
-    <div class="matrix-meta">
-      <span class="matrix-label" data-i18n="matrixLabel">Sicherungsmatrix</span>
-      <button type="button" class="btn-share" id="btn-share" onclick="shareMatrix()" data-i18n="shareButton" disabled>Teilen</button>
-    </div>
-
     <div class="empty" id="empty">
       <canvas class="empty-icon" id="empty-canvas" width="88" height="88" aria-hidden="true"></canvas>
       <div class="empty-h" data-i18n="emptyTitle">Gruppe noch leer</div>

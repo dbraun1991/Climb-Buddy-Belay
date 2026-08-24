@@ -146,9 +146,14 @@ Everything is in one `<script>` block near the end of the file.
   `shareMatrix()` branches on `navigator.share`+`canShare` (mobile, gated
   by the same `max-width: 768px` breakpoint as the sidebar) vs.
   `navigator.clipboard.write` (desktop) vs. a plain download (fallback).
-  `#btn-share` lives in `.matrix-meta`, which sits directly in `.main` —
-  outside `#empty`/`#matrix-wrap` — so the button is always present and
-  only its `disabled` attribute (toggled in `render()` alongside the
+  `#btn-share` lives in `.matrix-meta`, a page-level bar between
+  `</header>` and `.layout` — **not** inside `.sidebar` or `.main` — so
+  it's always present and always visible without scrolling, on any
+  viewport. It used to sit inside `.main` (still outside `#empty`/
+  `#matrix-wrap`, so technically always rendered) but on mobile that put
+  it below the open-by-default sidebar `<details>`, off-screen until
+  scrolled past — moving it above `.layout` entirely fixed that. Only its
+  `disabled` attribute (toggled in `render()` alongside the
   `#empty`/`#matrix-wrap` visibility swap) reflects whether there's a
   matrix to export yet.
 - **Footer**: `<footer class="site-footer">` — project name (untranslated,
