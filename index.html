@@ -498,6 +498,28 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.18);
     }
 
+    /* ─── Footer ─────────────────────────────────── */
+    .site-footer {
+      flex-shrink: 0;
+      background: var(--surface);
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding: 8px 16px;
+      font-size: 12px;
+      text-align: center;
+    }
+    .site-footer-inner {
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 4px 8px;
+    }
+    .site-footer-link { color: var(--muted); text-decoration: none; }
+    .site-footer-link:hover { color: var(--accent); }
+    .site-footer-sep { color: var(--border-s); }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition: none !important; animation: none !important; }
     }
@@ -533,6 +555,7 @@
       }
       details[open] > .sidebar-summary::after { transform: rotate(90deg); }
       .sidebar-body { margin-top: 16px; }
+      .hide-mobile { display: none; }
     }
   </style>
 </head>
@@ -659,6 +682,16 @@
 
 </div>
 
+<footer class="site-footer" role="contentinfo">
+  <p class="site-footer-inner">
+    <span class="hide-mobile">Climb-Buddy-Belay</span>
+    <span class="site-footer-sep hide-mobile" aria-hidden="true">·</span>
+    <a href="https://github.com/dbraun1991/Climb-Buddy-Belay" class="site-footer-link" rel="noopener noreferrer" target="_blank" data-i18n-title="footerGithubTitle">GitHub</a>
+    <span class="site-footer-sep hide-mobile" aria-hidden="true">·</span>
+    <a href="LICENSE" class="site-footer-link hide-mobile" data-i18n-title="footerLicenseTitle" data-i18n="footerLicense">MIT License</a>
+  </p>
+</footer>
+
 <script>
   const persons = [];
 
@@ -725,6 +758,9 @@
       summaryHeavyCanBelay: '<strong>{{heavy}}</strong> ({{heavyKg}} kg) kann <strong>{{light}}</strong> ({{lightKg}} kg) sichern, da {{heavy}} {{diff}} kg schwerer ist.',
       summaryLightCanBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) kann <strong>{{heavy}}</strong> ({{heavyKg}} kg) sichern — {{verdict}}.',
       summaryLightCannotBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) kann <strong>{{heavy}}</strong> ({{heavyKg}} kg) nicht ohne Bremsassistenten sichern — {{verdict}}.',
+      footerGithubTitle: 'Climb-Buddy-Belay Quellcode-Repository',
+      footerLicenseTitle: 'MIT-Lizenz (Volltext)',
+      footerLicense: 'MIT-Lizenz',
     },
     en: {
       pageTitle: 'Belay Check',
@@ -784,6 +820,9 @@
       summaryHeavyCanBelay: '<strong>{{heavy}}</strong> ({{heavyKg}} kg) can belay <strong>{{light}}</strong> ({{lightKg}} kg), since {{heavy}} is {{diff}} kg heavier.',
       summaryLightCanBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) can belay <strong>{{heavy}}</strong> ({{heavyKg}} kg) — {{verdict}}.',
       summaryLightCannotBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) cannot belay <strong>{{heavy}}</strong> ({{heavyKg}} kg) without an assisted-braking device — {{verdict}}.',
+      footerGithubTitle: 'Climb-Buddy-Belay source repository',
+      footerLicenseTitle: 'MIT License (full text)',
+      footerLicense: 'MIT License',
     },
   };
 
@@ -809,6 +848,9 @@
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      el.title = t(el.getAttribute('data-i18n-title'));
     });
     document.getElementById('lang-de').classList.toggle('active', lang === 'de');
     document.getElementById('lang-en').classList.toggle('active', lang === 'en');

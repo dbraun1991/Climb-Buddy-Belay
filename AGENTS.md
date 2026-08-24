@@ -138,6 +138,13 @@ Everything is in one `<script>` block near the end of the file.
   only its `disabled` attribute (toggled in `render()` alongside the
   `#empty`/`#matrix-wrap` visibility swap) reflects whether there's a
   matrix to export yet.
+- **Footer**: `<footer class="site-footer">` — project name (untranslated,
+  same as the repo name), GitHub link, MIT license link (`href="LICENSE"`,
+  the file already at the repo root) — mirrors the sibling apps'
+  (Metroviz/OrgVisualizr) footer pattern, adapted to this app's own
+  `data-i18n`/`t()` convention instead of Alpine/i18next. `.hide-mobile`
+  (project name + both `·` separators) follows the existing
+  `max-width: 768px` breakpoint, matching the source pattern.
 
 Matrix semantics: **row = securing person (Sichernde), column = climbing
 person (Kletternde)**. `classify(sec.kg, clim.kg)` is called with the row
