@@ -95,7 +95,14 @@ Everything is in one `<script>` block near the end of the file.
   column sort has to manual row drags. Module-level `sortState = {key,
   dir}` tracks the last sort so a second click on the same button
   flips direction instead of re-sorting ascending; switching keys resets
-  to ascending. `updateSortButtons()` (called from `render()`) reflects
+  to ascending. Whichever mutator makes `sortState.key` stop truthfully
+  describing `persons`' current order resets it to `{key: null, dir: 1}`
+  itself, deactivating the sort buttons' highlight — `addPerson`,
+  `importPersons` (append, so the new entries aren't in sorted position),
+  and `personDrop` (an explicit manual override). `removePerson`
+  deliberately does **not** reset it: splicing one entry out of an
+  already-sorted array leaves the rest still sorted, so the highlight
+  stays accurate. `updateSortButtons()` (called from `render()`) reflects
   `sortState` on the two `#sort-btn-name`/`#sort-btn-kg` buttons (`.active`
   class, ▲/▼ in a separate `.sort-arrow` span — kept out of the
   `data-i18n` target so a language switch doesn't clobber it) and

@@ -1139,6 +1139,7 @@
     }
 
     persons.push({ name, kg });
+    sortState = { key: null, dir: 1 };
     nameEl.value = '';
     kgEl.value   = '';
     nameEl.focus();
@@ -1181,6 +1182,7 @@
     if (isNaN(from) || from === i) return;
     const [moved] = persons.splice(from, 1);
     persons.splice(i, 0, moved);
+    sortState = { key: null, dir: 1 };
     render();
   }
 
@@ -1266,6 +1268,7 @@
     }
 
     if (added > 0) {
+      sortState = { key: null, dir: 1 };
       ta.value = '';
       render();
     }
