@@ -31,6 +31,13 @@ open index.html
 
 Keine Persistenz — die Gruppe wird nicht gespeichert und geht beim Neuladen verloren.
 
+Mehrere Personen lassen sich auch auf einmal einfügen: eine Zeile pro Person im Format `Name, Gewicht`, z. B.
+
+```
+Anna, 55
+Ben, 90
+```
+
 ## Sprache / Language
 
 Umschaltbar über die DE/EN-Buttons oben rechts, oder direkt per URL: `?lang=en` bzw. `?lang=de`. Standard ist Deutsch.

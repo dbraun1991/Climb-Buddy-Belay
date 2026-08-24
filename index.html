@@ -514,6 +514,15 @@
     </div>
 
     <div>
+      <div class="eyebrow" data-i18n="importEyebrow">Mehrere einfügen</div>
+      <form id="import-form" class="form-stack" onsubmit="importPersons(event)" novalidate>
+        <textarea id="inp-import" class="field-input" rows="3" style="resize: vertical; font-family: inherit;" data-i18n-placeholder="importPlaceholder" placeholder="Anna, 55&#10;Ben, 90"></textarea>
+        <div class="form-err" id="import-err" role="alert"></div>
+        <button type="submit" class="btn-add" data-i18n="importButton">Einfügen</button>
+      </form>
+    </div>
+
+    <div>
       <div class="eyebrow" id="group-eyebrow">Gruppe (0 Personen)</div>
       <div class="plist" id="plist">
         <div class="plist-empty">Noch niemand dabei.</div>
@@ -604,6 +613,11 @@
       namePlaceholder: 'z. B. Anna',
       weightLabel: 'Gewicht (kg)',
       addButton: 'In Gruppe aufnehmen',
+      importEyebrow: 'Mehrere einfügen',
+      importPlaceholder: 'Anna, 55\nBen, 90',
+      importButton: 'Einfügen',
+      importLineError: 'Zeile {{line}}: {{msg}}',
+      errFormat: 'Format: Name, Gewicht (z. B. "Anna, 55")',
       groupCountOne: 'Gruppe (1 Person)',
       groupCountOther: 'Gruppe ({{n}} Personen)',
       noOneYet: 'Noch niemand dabei.',
@@ -651,6 +665,11 @@
       namePlaceholder: 'e.g. Anna',
       weightLabel: 'Weight (kg)',
       addButton: 'Add to group',
+      importEyebrow: 'Paste multiple',
+      importPlaceholder: 'Anna, 55\nBen, 90',
+      importButton: 'Import',
+      importLineError: 'Line {{line}}: {{msg}}',
+      errFormat: 'Format: name, weight (e.g. "Anna, 55")',
       groupCountOne: 'Group (1 person)',
       groupCountOther: 'Group ({{n}} people)',
       noOneYet: 'Nobody yet.',
@@ -801,6 +820,60 @@
   function removePerson(i) {
     persons.splice(i, 1);
     render();
+  }
+
+  /* Strict "Name, kg" per line — one deliberately simple format, not a   */
+  /* general CSV/JSON import. Each line is validated with the same rules */
+  /* as addPerson(); bad lines are skipped and reported, not fatal.      */
+  function importPersons(e) {
+    e.preventDefault();
+    const ta    = document.getElementById('inp-import');
+    const errEl = document.getElementById('import-err');
+    errEl.classList.remove('on');
+
+    const lines = ta.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length === 0) return;
+
+    const errors = [];
+    let added = 0;
+
+    lines.forEach((line, idx) => {
+      const lineNum   = idx + 1;
+      const commaIdx  = line.indexOf(',');
+      if (commaIdx === -1) {
+        errors.push(t('importLineError', { line: lineNum, msg: t('errFormat') }));
+        return;
+      }
+
+      const name = line.slice(0, commaIdx).trim();
+      const kg   = parseFloat(line.slice(commaIdx + 1).trim());
+
+      if (!name) {
+        errors.push(t('importLineError', { line: lineNum, msg: t('errNameRequired') }));
+        return;
+      }
+      if (isNaN(kg) || kg < 30 || kg > 200) {
+        errors.push(t('importLineError', { line: lineNum, msg: t('errWeightRange') }));
+        return;
+      }
+      if (persons.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+        errors.push(t('importLineError', { line: lineNum, msg: t('errDuplicate', { name }) }));
+        return;
+      }
+
+      persons.push({ name, kg });
+      added++;
+    });
+
+    if (errors.length) {
+      errEl.innerHTML = errors.map(esc).join('<br>');
+      errEl.classList.add('on');
+    }
+
+    if (added > 0) {
+      ta.value = '';
+      render();
+    }
   }
 
   function showErr(msg) {

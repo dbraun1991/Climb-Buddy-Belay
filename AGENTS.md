@@ -66,9 +66,17 @@ Everything is in one `<script>` block near the end of the file.
 
 - **State**: `const persons = []` — the only piece of application state.
   Each entry is `{ name: string, kg: number }`.
-- **Mutators**: `addPerson(event)` (validates + pushes), `removePerson(i)`
-  (splices). Both call `render()` at the end; there is no other way state
-  changes reach the DOM.
+- **Mutators**: `addPerson(event)` (validates + pushes one), `removePerson(i)`
+  (splices), `importPersons(event)` (parses the paste-import textarea,
+  strict `Name, kg` per line, one pair per line — reuses `addPerson()`'s
+  validation per line via `t()`'s error keys, collects per-line errors
+  instead of aborting the whole paste, only clears the textarea if at
+  least one line succeeded). All three call `render()` at the end; there
+  is no other way state changes reach the DOM. `importPersons` is a
+  one-time bulk-entry convenience, not storage — nothing is written
+  anywhere, the pasted text just seeds `persons` the same as manual entry
+  would, so it doesn't conflict with
+  [`docs/adr/0003`](docs/adr/0003-in-memory-state-no-persistence.md).
 - **Domain logic**:
   - `classify(secKg, climKg)` — buckets `climKg - secKg` into
     `'ok' | 'warn' | 'crit' | 'danger'` using fixed thresholds
@@ -149,22 +157,6 @@ Captured from product notes, not yet designed or built. Treat as
 direction, not spec — clarify open questions with the user before
 implementing rather than guessing at exact behavior.
 
-- **Simple text import ("load" a group).** Let users paste/type a plain
-  text list (e.g. one `Name, kg` pair per line) to populate `persons` in
-  one step, instead of adding people one at a time through the form.
-  Explicitly requested as a *lighter-weight* alternative to a full
-  JSON export/import round-trip like Metroviz's/OrgVisualizr's
-  `file-manager.js` — import only, no export, no file dialogs, no schema
-  versioning; just a textarea/paste target parsed line-by-line with the
-  same validation `addPerson()` already applies per line (name required,
-  30–200 kg, no case-insensitive duplicates), reporting which lines failed
-  rather than rejecting the whole paste. This is a deliberate,
-  user-initiated exception to
-  [`docs/adr/0003`](docs/adr/0003-in-memory-state-no-persistence.md) (no
-  persistence) — it's a one-time bulk-entry convenience, not storage:
-  nothing is written anywhere, the pasted text just seeds `persons` the
-  same as manual entry would. Doesn't need its own ADR unless the scope
-  grows into export/storage territory.
 - **Two dimensions: "Lead climb" and "Belay buddy".** Introduce a second
   axis/mode alongside the current lead-climbing check. Exact semantics
   are unspecified — clarify with the user before building: is this a
