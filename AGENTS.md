@@ -133,6 +133,11 @@ Everything is in one `<script>` block near the end of the file.
   `shareMatrix()` branches on `navigator.share`+`canShare` (mobile, gated
   by the same `max-width: 768px` breakpoint as the sidebar) vs.
   `navigator.clipboard.write` (desktop) vs. a plain download (fallback).
+  `#btn-share` lives in `.matrix-meta`, which sits directly in `.main` —
+  outside `#empty`/`#matrix-wrap` — so the button is always present and
+  only its `disabled` attribute (toggled in `render()` alongside the
+  `#empty`/`#matrix-wrap` visibility swap) reflects whether there's a
+  matrix to export yet.
 
 Matrix semantics: **row = securing person (Sichernde), column = climbing
 person (Kletternde)**. `classify(sec.kg, clim.kg)` is called with the row

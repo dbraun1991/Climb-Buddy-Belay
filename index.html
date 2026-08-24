@@ -256,6 +256,8 @@
       align-items: baseline;
       gap: 10px;
       flex-wrap: wrap;
+      margin-bottom: 20px;
+      flex-shrink: 0;
     }
     .matrix-label {
       font-size: 10px;
@@ -612,6 +614,12 @@
   </aside>
 
   <main class="main" id="main">
+    <div class="matrix-meta">
+      <span class="matrix-label" data-i18n="matrixLabel">Sicherungsmatrix</span>
+      <span class="matrix-hint" data-i18n="matrixHint">Zeile = Sichernde · Spalte = Kletternde</span>
+      <button type="button" class="btn-share" id="btn-share" onclick="shareMatrix()" data-i18n="shareButton" disabled>Teilen</button>
+    </div>
+
     <div class="empty" id="empty">
       <canvas class="empty-icon" id="empty-canvas" width="88" height="88" aria-hidden="true"></canvas>
       <div class="empty-h" data-i18n="emptyTitle">Gruppe noch leer</div>
@@ -619,11 +627,6 @@
     </div>
 
     <div class="matrix-wrap" id="matrix-wrap" style="display:none">
-      <div class="matrix-meta">
-        <span class="matrix-label" data-i18n="matrixLabel">Sicherungsmatrix</span>
-        <span class="matrix-hint" data-i18n="matrixHint">Zeile = Sichernde · Spalte = Kletternde</span>
-        <button type="button" class="btn-share" id="btn-share" onclick="shareMatrix()" data-i18n="shareButton">Teilen</button>
-      </div>
       <div class="research-note">
         <span class="research-note-icon">ℹ</span>
         <span data-i18n="researchNote">
@@ -999,6 +1002,7 @@
     const showMatrix = n >= 2;
     document.getElementById('empty').style.display       = showMatrix ? 'none' : '';
     document.getElementById('matrix-wrap').style.display = showMatrix ? ''     : 'none';
+    document.getElementById('btn-share').disabled = !showMatrix;
 
     if (!showMatrix) return;
 
