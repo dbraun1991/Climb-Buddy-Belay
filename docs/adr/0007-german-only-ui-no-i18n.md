@@ -3,7 +3,7 @@
 Date: 2026-08-24
 
 ## Status
-Accepted
+Superseded by [0009](0009-inline-vanilla-i18n-en-de.md)
 
 ## Context
 All user-facing text — labels, error messages, legend, summary sentences,
@@ -28,3 +28,9 @@ string table.
   centralized.
 - Limits the tool's reach to German-speaking climbers unless this decision
   is revisited.
+
+## Update (2026-08-24)
+Superseded by [0009](0009-inline-vanilla-i18n-en-de.md): an EN/DE switcher
+was added using an inline translation table, not the string-table
+duplication or restructuring predicted above. This record stays as the
+historical rationale for the original German-only period.

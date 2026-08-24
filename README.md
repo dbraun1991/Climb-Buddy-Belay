@@ -31,6 +31,10 @@ open index.html
 
 Keine Persistenz — die Gruppe wird nicht gespeichert und geht beim Neuladen verloren.
 
+## Sprache / Language
+
+Umschaltbar über die DE/EN-Buttons oben rechts, oder direkt per URL: `?lang=en` bzw. `?lang=de`. Standard ist Deutsch.
+
 ## Hintergrund
 
 In einem reibungsarmen Umfeld (gerader Seilverlauf in der Halle) liegt der optimale Gewichtsunterschied in einer Seilschaft bei ± 5 kg. Mit dickerem Seil fallen die Kompensationswerte bei den meisten Geräten deutlich höher aus als mit dünnem Seil.

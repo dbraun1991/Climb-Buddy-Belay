@@ -19,8 +19,9 @@ made.
 | [0004](0004-vanilla-js-global-state-full-rerender.md) | Vanilla JS with global mutable state and full re-render | Accepted |
 | [0005](0005-fixed-kg-threshold-classification-model.md) | Fixed kg-threshold model for belay-safety classification | Accepted |
 | [0006](0006-github-pages-hosting.md) | GitHub Pages for hosting and deployment | Accepted |
-| [0007](0007-german-only-ui-no-i18n.md) | German-only UI, no i18n abstraction | Accepted |
+| [0007](0007-german-only-ui-no-i18n.md) | German-only UI, no i18n abstraction | Superseded by 0009 |
 | [0008](0008-canvas-drawn-icons-no-image-assets.md) | Canvas-drawn icons instead of image/icon-font assets | Accepted |
+| [0009](0009-inline-vanilla-i18n-en-de.md) | Inline vanilla-JS i18n for German + English | Accepted |
 
 ## Template
 

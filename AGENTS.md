@@ -6,7 +6,8 @@ Technical reference for coding agents working in this repository.
 
 Climb-Buddy-Belay ("Sicherungscheck") is a single-page browser tool that
 computes a belay-partner safety matrix for a lead-climbing group from
-each person's name and body weight. German UI, no build step, no backend.
+each person's name and body weight. German/English UI (German default),
+no build step, no backend.
 
 Live: https://dbraun1991.github.io/Climb-Buddy-Belay/
 
@@ -51,8 +52,9 @@ Relevant ones:
 - `0004` — vanilla JS, one global `persons` array, full re-render on change
 - `0005` — the kg-threshold safety model (see below)
 - `0006` — GitHub Pages hosting
-- `0007` — German-only UI, no i18n layer
+- `0007` — German-only UI, no i18n layer (superseded by `0009`)
 - `0008` — canvas-drawn icons, no image/SVG/icon-font assets
+- `0009` — inline vanilla-JS i18n (EN/DE), no CDN library, no locale files
 
 If a task requires reversing one of these, say so explicitly rather than
 quietly working around it — e.g. adding `localStorage` contradicts `0003`
@@ -87,6 +89,14 @@ Everything is in one `<script>` block near the end of the file.
 - **Decorative graphics**: `drawLogo(id)` and `drawEmpty(id)` paint the
   header carabiner icon and empty-state figure-8 device onto `<canvas>`
   elements using the Canvas 2D API. No image assets exist.
+- **i18n**: `TRANSLATIONS` (`{ de: {...}, en: {...} }`) plus `t(key, vars)`
+  for lookup/`{{var}}` interpolation, `detectLang()` (URL `?lang=` then
+  `navigator.language`), and `applyStaticTranslations()`/`setLang(lang)`
+  for the switcher. Static markup opts in via `data-i18n="key"` (sets
+  `innerHTML`) or `data-i18n-placeholder="key"`; anything rendered by
+  `render()`/`renderSummary()`/`addPerson()` calls `t()` directly instead.
+  Values interpolated into a `t()` template that end up in `innerHTML`
+  must be pre-escaped with `esc()` first (see `docs/adr/0009`).
 
 Matrix semantics: **row = securing person (Sichernde), column = climbing
 person (Kletternde)**. `classify(sec.kg, clim.kg)` is called with the row
@@ -96,21 +106,28 @@ image across the diagonal represent different, unrelated ratings).
 
 ## Domain rules (do not change without updating all three places)
 
-The kg-threshold bands are duplicated in three places that must stay
+The kg-threshold bands are duplicated in four places that must stay
 consistent:
 
 1. `classify()` in the `<script>` block (the actual logic)
-2. The legend in the sidebar (`.lgd-list` markup)
+2. The legend in the sidebar — `legendOk`/`legendWarn`/`legendCrit`/
+   `legendDanger` in **both** `TRANSLATIONS.de` and `TRANSLATIONS.en`
 3. The table in `README.md`
 
-If thresholds or colors change, update all three. The ≥15 kg gear-hint
+If thresholds or colors change, update all of these. The ≥15 kg gear-hint
 (assisted-braking devices, rope-diameter note) is a separate, static
 threshold check in `renderSummary()` (`hasHeavyMismatch`) and its own
-copy block — check it too when touching the model.
+copy block (`gearHint1`/`2`/`3` in both languages) — check it too when
+touching the model.
 
 ## Conventions
 
-- **Language**: all user-facing strings are German. Keep new strings
+- **Language**: the UI supports German and English via the inline
+  `TRANSLATIONS` table (see `docs/adr/0009`); German remains the default
+  (`detectLang()` falls back to `de` unless the browser or `?lang=`
+  requests English). Every new user-facing string needs an entry in
+  **both** `TRANSLATIONS.de` and `TRANSLATIONS.en` — don't hardcode a new
+  string into markup or a template literal. Keep new German strings
   German and consistent in tone/formality (informal "du" is not used;
   the copy is neutral/instructional) with existing copy — see `0007`.
 - **No comments explaining what code does** — the existing code has none;
@@ -132,30 +149,22 @@ Captured from product notes, not yet designed or built. Treat as
 direction, not spec — clarify open questions with the user before
 implementing rather than guessing at exact behavior.
 
-- **"Can belay all" / "can lead-climb with all" lists.** Add a derived
-  view that, per person, checks their full row and column in the matrix
-  and surfaces two lists: people whose row contains no `crit`/`danger`
-  rating (they can safely belay everyone in the group) and people whose
-  column contains no `crit`/`danger` rating (everyone in the group can
-  safely belay them, i.e. they can lead-climb with anyone). Pure
-  derivation from the existing `classify()` results — no new inputs
-  needed.
-- **Increase visual weight of the three warning bullet points.** The
-  `.gear-hint` box currently renders its three points (extra-gear-weight
-  caveat, rope-diameter note, assisted-braking-device recommendation) as
-  plain nested `<span class="gear-hint-devices">` lines inside one
-  paragraph. Restructure as a real bulleted list (e.g. `<ul><li>`) with
-  stronger visual separation/iconography per point so the three warnings
-  read as distinct, prominent items rather than a run-on paragraph.
-- **JSON export/import ("load"/"unload" a group).** Let users export the
-  current `persons` array as JSON (e.g. copy/download) and re-import it
-  to restore a group. This is a deliberate, user-initiated exception to
+- **Simple text import ("load" a group).** Let users paste/type a plain
+  text list (e.g. one `Name, kg` pair per line) to populate `persons` in
+  one step, instead of adding people one at a time through the form.
+  Explicitly requested as a *lighter-weight* alternative to a full
+  JSON export/import round-trip like Metroviz's/OrgVisualizr's
+  `file-manager.js` — import only, no export, no file dialogs, no schema
+  versioning; just a textarea/paste target parsed line-by-line with the
+  same validation `addPerson()` already applies per line (name required,
+  30–200 kg, no case-insensitive duplicates), reporting which lines failed
+  rather than rejecting the whole paste. This is a deliberate,
+  user-initiated exception to
   [`docs/adr/0003`](docs/adr/0003-in-memory-state-no-persistence.md) (no
-  persistence) — scope it as explicit export/import of a file/text blob,
-  not automatic storage, to keep the "nothing is saved unless you ask"
-  guarantee. Warrants its own ADR (superseding or amending `0003`) once
-  implemented, and a README update since `0003`'s "no persistence"
-  framing would no longer be fully accurate.
+  persistence) — it's a one-time bulk-entry convenience, not storage:
+  nothing is written anywhere, the pasted text just seeds `persons` the
+  same as manual entry would. Doesn't need its own ADR unless the scope
+  grows into export/storage territory.
 - **Two dimensions: "Lead climb" and "Belay buddy".** Introduce a second
   axis/mode alongside the current lead-climbing check. Exact semantics
   are unspecified — clarify with the user before building: is this a
@@ -165,12 +174,6 @@ implementing rather than guessing at exact behavior.
   existing matrix? This likely also touches
   [`docs/adr/0005`](docs/adr/0005-fixed-kg-threshold-classification-model.md)
   (currently modeling lead climbing only).
-- **Internationalization.** Add multi-language support with a language
-  switcher, revisiting
-  [`docs/adr/0007`](docs/adr/0007-german-only-ui-no-i18n.md) (currently
-  German-only, strings inlined throughout markup and JS). Needs a string
-  table extracted from the current inline German text before a switcher
-  is meaningful.
 
 ## Testing / verification
 

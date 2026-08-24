@@ -62,6 +62,32 @@
       color: #9AA4B4;
       letter-spacing: 0.04em;
     }
+    .lang-switch {
+      margin-left: auto;
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .lang-btn {
+      background: none;
+      border: 1px solid #3A4152;
+      color: #9AA4B4;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      padding: 4px 9px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+    }
+    .lang-btn:hover { color: #fff; border-color: #565F73; }
+    .lang-btn:focus-visible { outline: 2px solid var(--heat); outline-offset: 2px; }
+    .lang-btn.active {
+      background: var(--heat);
+      color: #141820;
+      border-color: var(--heat);
+    }
 
     /* ─── Layout ─────────────────────────────────── */
     .layout {
@@ -459,8 +485,12 @@
 <header class="hdr">
   <canvas class="hdr-logo" id="logo-canvas" width="30" height="30" aria-hidden="true"></canvas>
   <div>
-    <div class="hdr-title">Sicherungscheck</div>
-    <div class="hdr-sub">Sicherungsmatrix für Klettergruppen · Lead</div>
+    <div class="hdr-title" data-i18n="headerTitle">Sicherungscheck</div>
+    <div class="hdr-sub" data-i18n="headerSub">Sicherungsmatrix für Klettergruppen · Lead</div>
+  </div>
+  <div class="lang-switch" role="group" aria-label="Sprache / Language">
+    <button type="button" class="lang-btn" id="lang-de" onclick="setLang('de')">DE</button>
+    <button type="button" class="lang-btn" id="lang-en" onclick="setLang('en')">EN</button>
   </div>
 </header>
 
@@ -468,18 +498,18 @@
 
   <aside class="sidebar">
     <div>
-      <div class="eyebrow">Person hinzufügen</div>
+      <div class="eyebrow" data-i18n="addPersonEyebrow">Person hinzufügen</div>
       <form id="add-form" class="form-stack" onsubmit="addPerson(event)" novalidate>
         <div class="field">
-          <label class="field-label" for="inp-name">Name</label>
-          <input type="text" id="inp-name" class="field-input" placeholder="z. B. Anna" autocomplete="off" />
+          <label class="field-label" for="inp-name" data-i18n="nameLabel">Name</label>
+          <input type="text" id="inp-name" class="field-input" data-i18n-placeholder="namePlaceholder" placeholder="z. B. Anna" autocomplete="off" />
         </div>
         <div class="field">
-          <label class="field-label" for="inp-kg">Gewicht (kg)</label>
+          <label class="field-label" for="inp-kg" data-i18n="weightLabel">Gewicht (kg)</label>
           <input type="number" id="inp-kg" class="field-input" placeholder="70" min="30" max="200" step="1" />
         </div>
         <div class="form-err" id="form-err" role="alert"></div>
-        <button type="submit" class="btn-add">In Gruppe aufnehmen</button>
+        <button type="submit" class="btn-add" data-i18n="addButton">In Gruppe aufnehmen</button>
       </form>
     </div>
 
@@ -491,23 +521,23 @@
     </div>
 
     <div class="legend-wrap">
-      <div class="eyebrow">Legende</div>
+      <div class="eyebrow" data-i18n="legendTitle">Legende</div>
       <div class="lgd-list">
         <div class="lgd-row">
           <div class="lgd-chip" style="background: var(--ok);">✓</div>
-          <span>bis 10 kg leichter — sicher</span>
+          <span data-i18n="legendOk">bis 10 kg leichter — sicher</span>
         </div>
         <div class="lgd-row">
           <div class="lgd-chip" style="background: var(--warn);">!</div>
-          <span>10 – 15 kg leichter — grenzwertig</span>
+          <span data-i18n="legendWarn">10 – 15 kg leichter — grenzwertig</span>
         </div>
         <div class="lgd-row">
           <div class="lgd-chip" style="background: var(--crit);">⚠</div>
-          <span>15 – 20 kg leichter — kritisch</span>
+          <span data-i18n="legendCrit">15 – 20 kg leichter — kritisch</span>
         </div>
         <div class="lgd-row">
           <div class="lgd-chip" style="background: var(--danger);">✗</div>
-          <span>über 20 kg leichter — nicht empfohlen</span>
+          <span data-i18n="legendDanger">über 20 kg leichter — nicht empfohlen</span>
         </div>
       </div>
     </div>
@@ -516,18 +546,18 @@
   <main class="main" id="main">
     <div class="empty" id="empty">
       <canvas class="empty-icon" id="empty-canvas" width="88" height="88" aria-hidden="true"></canvas>
-      <div class="empty-h">Gruppe noch leer</div>
-      <div class="empty-p">Füge mindestens zwei Personen mit Gewicht hinzu — dann erscheint die Sicherungsmatrix.</div>
+      <div class="empty-h" data-i18n="emptyTitle">Gruppe noch leer</div>
+      <div class="empty-p" data-i18n="emptyText">Füge mindestens zwei Personen mit Gewicht hinzu — dann erscheint die Sicherungsmatrix.</div>
     </div>
 
     <div class="matrix-wrap" id="matrix-wrap" style="display:none">
       <div class="matrix-meta">
-        <span class="matrix-label">Sicherungsmatrix</span>
-        <span class="matrix-hint">Zeile = Sichernde · Spalte = Kletternde</span>
+        <span class="matrix-label" data-i18n="matrixLabel">Sicherungsmatrix</span>
+        <span class="matrix-hint" data-i18n="matrixHint">Zeile = Sichernde · Spalte = Kletternde</span>
       </div>
       <div class="research-note">
         <span class="research-note-icon">ℹ</span>
-        <span>
+        <span data-i18n="researchNote">
           Untersuchungen zeigen: In einem reibungsarmen Umfeld — etwa bei geradem Seilverlauf in der Halle — liegt der optimale Gewichtsunterschied in einer Seilschaft bei <strong>± 5 kg</strong>.
         </span>
       </div>
@@ -536,19 +566,19 @@
       </div>
       <div class="summary" id="summary"></div>
       <div class="gear-hint" id="gear-hint" style="display:none">
-        <div class="gear-hint-title"><span class="gear-hint-icon">⚠</span> Zusätzlich zu beachten</div>
+        <div class="gear-hint-title"><span class="gear-hint-icon">⚠</span> <span data-i18n="gearHintTitle">Zusätzlich zu beachten</span></div>
         <ul class="gear-hint-list">
           <li class="gear-hint-item">
             <span class="gear-hint-num">1</span>
-            <span>Vorsteigende tragen zusätzliches Material — Expressschlingen, Seil und Klemmgeräte können mehrere Kilogramm hinzufügen. Das tatsächliche Gewicht im Sturz liegt entsprechend höher als hier angegeben.</span>
+            <span data-i18n="gearHint1">Vorsteigende tragen zusätzliches Material — Expressschlingen, Seil und Klemmgeräte können mehrere Kilogramm hinzufügen. Das tatsächliche Gewicht im Sturz liegt entsprechend höher als hier angegeben.</span>
           </li>
           <li class="gear-hint-item">
             <span class="gear-hint-num">2</span>
-            <span>Mit dickerem Seil fallen die Kompensationswerte bei den meisten Geräten deutlich höher aus als mit dünnem Seil.</span>
+            <span data-i18n="gearHint2">Mit dickerem Seil fallen die Kompensationswerte bei den meisten Geräten deutlich höher aus als mit dünnem Seil.</span>
           </li>
           <li class="gear-hint-item">
             <span class="gear-hint-num">3</span>
-            <span>Bei großem Gewichtsunterschied empfehlen sich Bremsassistenten wie <em>Mammut Assist</em>, <em>Edelrid Ohmega</em> oder <em>Raed Zead</em>, die im Sturzfall zusätzliche Bremskraft erzeugen.</span>
+            <span data-i18n="gearHint3">Bei großem Gewichtsunterschied empfehlen sich Bremsassistenten wie <em>Mammut Assist</em>, <em>Edelrid Ohmega</em> oder <em>Raed Zead</em>, die im Sturzfall zusätzliche Bremskraft erzeugen.</span>
           </li>
         </ul>
       </div>
@@ -559,6 +589,145 @@
 
 <script>
   const persons = [];
+
+  /* ── i18n ───────────────────────────────────────── */
+  /* Inline translation table, no CDN library — keeps the app single-file,   */
+  /* zero-dependency and openable via file:// (see docs/adr/0009). Language  */
+  /* choice lives only in the ?lang= URL param, never in storage (0003).     */
+  const TRANSLATIONS = {
+    de: {
+      pageTitle: 'Sicherungscheck',
+      headerTitle: 'Sicherungscheck',
+      headerSub: 'Sicherungsmatrix für Klettergruppen · Lead',
+      addPersonEyebrow: 'Person hinzufügen',
+      nameLabel: 'Name',
+      namePlaceholder: 'z. B. Anna',
+      weightLabel: 'Gewicht (kg)',
+      addButton: 'In Gruppe aufnehmen',
+      groupCountOne: 'Gruppe (1 Person)',
+      groupCountOther: 'Gruppe ({{n}} Personen)',
+      noOneYet: 'Noch niemand dabei.',
+      removePerson: '{{name}} entfernen',
+      removeTitle: 'Entfernen',
+      legendTitle: 'Legende',
+      legendOk: 'bis 10 kg leichter — sicher',
+      legendWarn: '10 – 15 kg leichter — grenzwertig',
+      legendCrit: '15 – 20 kg leichter — kritisch',
+      legendDanger: 'über 20 kg leichter — nicht empfohlen',
+      emptyTitle: 'Gruppe noch leer',
+      emptyText: 'Füge mindestens zwei Personen mit Gewicht hinzu — dann erscheint die Sicherungsmatrix.',
+      matrixLabel: 'Sicherungsmatrix',
+      matrixHint: 'Zeile = Sichernde · Spalte = Kletternde',
+      researchNote: 'Untersuchungen zeigen: In einem reibungsarmen Umfeld — etwa bei geradem Seilverlauf in der Halle — liegt der optimale Gewichtsunterschied in einer Seilschaft bei <strong>± 5 kg</strong>.',
+      gearHintTitle: 'Zusätzlich zu beachten',
+      gearHint1: 'Vorsteigende tragen zusätzliches Material — Expressschlingen, Seil und Klemmgeräte können mehrere Kilogramm hinzufügen. Das tatsächliche Gewicht im Sturz liegt entsprechend höher als hier angegeben.',
+      gearHint2: 'Mit dickerem Seil fallen die Kompensationswerte bei den meisten Geräten deutlich höher aus als mit dünnem Seil.',
+      gearHint3: 'Bei großem Gewichtsunterschied empfehlen sich Bremsassistenten wie <em>Mammut Assist</em>, <em>Edelrid Ohmega</em> oder <em>Raed Zead</em>, die im Sturzfall zusätzliche Bremskraft erzeugen.',
+      errNameRequired: 'Bitte einen Namen eingeben.',
+      errWeightRange: 'Gewicht muss zwischen 30 und 200 kg liegen.',
+      errDuplicate: '"{{name}}" ist bereits in der Gruppe.',
+      canBelayAll: 'Kann alle sichern',
+      canClimbWithAll: 'Kann mit allen vorsteigen',
+      nobody: 'niemand',
+      equalWeight: 'Alle Personen wiegen gleich viel — gegenseitiges Sichern ist in beide Richtungen unbedenklich.',
+      verdict_ok_label: 'problemlos',
+      verdict_ok_detail: 'der Unterschied von {{diff}} kg liegt im grünen Bereich',
+      verdict_warn_label: 'grenzwertig',
+      verdict_warn_detail: 'der Unterschied von {{diff}} kg ist knapp über der Empfehlung',
+      verdict_crit_label: 'kritisch',
+      verdict_crit_detail: 'der Unterschied von {{diff}} kg überschreitet die Empfehlung deutlich',
+      verdict_danger_label: 'nicht empfohlen',
+      verdict_danger_detail: 'der Unterschied von {{diff}} kg ist zu groß',
+      summaryHeavyCanBelay: '<strong>{{heavy}}</strong> ({{heavyKg}} kg) kann <strong>{{light}}</strong> ({{lightKg}} kg) sichern, da {{heavy}} {{diff}} kg schwerer ist.',
+      summaryLightCanBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) kann <strong>{{heavy}}</strong> ({{heavyKg}} kg) sichern — {{verdict}}.',
+      summaryLightCannotBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) kann <strong>{{heavy}}</strong> ({{heavyKg}} kg) nicht ohne Bremsassistenten sichern — {{verdict}}.',
+    },
+    en: {
+      pageTitle: 'Belay Check',
+      headerTitle: 'Belay Check',
+      headerSub: 'Belay safety matrix for lead-climbing groups',
+      addPersonEyebrow: 'Add person',
+      nameLabel: 'Name',
+      namePlaceholder: 'e.g. Anna',
+      weightLabel: 'Weight (kg)',
+      addButton: 'Add to group',
+      groupCountOne: 'Group (1 person)',
+      groupCountOther: 'Group ({{n}} people)',
+      noOneYet: 'Nobody yet.',
+      removePerson: 'Remove {{name}}',
+      removeTitle: 'Remove',
+      legendTitle: 'Legend',
+      legendOk: 'up to 10 kg lighter — safe',
+      legendWarn: '10 – 15 kg lighter — borderline',
+      legendCrit: '15 – 20 kg lighter — critical',
+      legendDanger: 'over 20 kg lighter — not recommended',
+      emptyTitle: 'Group is empty',
+      emptyText: 'Add at least two people with weight — then the belay matrix appears.',
+      matrixLabel: 'Belay matrix',
+      matrixHint: 'Row = belayer · Column = climber',
+      researchNote: 'Research shows: in a low-friction setup — e.g. a straight rope run in the gym — the optimal weight difference on a rope team is <strong>± 5 kg</strong>.',
+      gearHintTitle: 'Also worth noting',
+      gearHint1: 'Lead climbers carry extra gear — quickdraws, rope and cams can add several kilograms. The actual fall weight is therefore higher than shown here.',
+      gearHint2: 'With a thicker rope, compensation values are noticeably higher for most devices than with a thin rope.',
+      gearHint3: 'For a large weight difference, assisted-braking devices such as <em>Mammut Assist</em>, <em>Edelrid Ohmega</em> or <em>Raed Zead</em> are recommended, since they generate extra braking force in a fall.',
+      errNameRequired: 'Please enter a name.',
+      errWeightRange: 'Weight must be between 30 and 200 kg.',
+      errDuplicate: '"{{name}}" is already in the group.',
+      canBelayAll: 'Can belay everyone',
+      canClimbWithAll: 'Can lead-climb with everyone',
+      nobody: 'nobody',
+      equalWeight: 'Everyone weighs the same — belaying each other is fine in either direction.',
+      verdict_ok_label: 'fine',
+      verdict_ok_detail: 'the {{diff}} kg difference is in the safe range',
+      verdict_warn_label: 'borderline',
+      verdict_warn_detail: 'the {{diff}} kg difference is just above the recommendation',
+      verdict_crit_label: 'critical',
+      verdict_crit_detail: 'the {{diff}} kg difference clearly exceeds the recommendation',
+      verdict_danger_label: 'not recommended',
+      verdict_danger_detail: 'the {{diff}} kg difference is too large',
+      summaryHeavyCanBelay: '<strong>{{heavy}}</strong> ({{heavyKg}} kg) can belay <strong>{{light}}</strong> ({{lightKg}} kg), since {{heavy}} is {{diff}} kg heavier.',
+      summaryLightCanBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) can belay <strong>{{heavy}}</strong> ({{heavyKg}} kg) — {{verdict}}.',
+      summaryLightCannotBelay: '<strong>{{light}}</strong> ({{lightKg}} kg) cannot belay <strong>{{heavy}}</strong> ({{heavyKg}} kg) without an assisted-braking device — {{verdict}}.',
+    },
+  };
+
+  let lang = 'de';
+
+  function detectLang() {
+    const fromUrl = new URLSearchParams(location.search).get('lang');
+    if (fromUrl === 'de' || fromUrl === 'en') return fromUrl;
+    return (navigator.language || '').toLowerCase().startsWith('en') ? 'en' : 'de';
+  }
+
+  function t(key, vars) {
+    let str = TRANSLATIONS[lang][key] ?? TRANSLATIONS.de[key] ?? key;
+    if (vars) {
+      for (const k in vars) str = str.replaceAll(`{{${k}}}`, vars[k]);
+    }
+    return str;
+  }
+
+  function applyStaticTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.innerHTML = t(el.getAttribute('data-i18n'));
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+    });
+    document.getElementById('lang-de').classList.toggle('active', lang === 'de');
+    document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+  }
+
+  function setLang(newLang) {
+    lang = newLang;
+    const url = new URL(location.href);
+    url.searchParams.set('lang', lang);
+    history.replaceState(null, '', url);
+    document.documentElement.lang = lang;
+    document.title = t('pageTitle');
+    applyStaticTranslations();
+    render();
+  }
 
   /* ── Canvas graphics ────────────────────────────── */
   function drawLogo(id) {
@@ -616,10 +785,10 @@
     const name = nameEl.value.trim();
     const kg   = parseFloat(kgEl.value);
 
-    if (!name) { return showErr('Bitte einen Namen eingeben.'); }
-    if (isNaN(kg) || kg < 30 || kg > 200) { return showErr('Gewicht muss zwischen 30 und 200 kg liegen.'); }
+    if (!name) { return showErr(t('errNameRequired')); }
+    if (isNaN(kg) || kg < 30 || kg > 200) { return showErr(t('errWeightRange')); }
     if (persons.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-      return showErr(`"${name}" ist bereits in der Gruppe.`);
+      return showErr(t('errDuplicate', { name }));
     }
 
     persons.push({ name, kg });
@@ -661,12 +830,12 @@
     // Group eyebrow
     const n = persons.length;
     document.getElementById('group-eyebrow').textContent =
-      `Gruppe (${n} ${n === 1 ? 'Person' : 'Personen'})`;
+      n === 1 ? t('groupCountOne') : t('groupCountOther', { n });
 
     // Person list
     const list = document.getElementById('plist');
     if (n === 0) {
-      list.innerHTML = '<div class="plist-empty">Noch niemand dabei.</div>';
+      list.innerHTML = `<div class="plist-empty">${t('noOneYet')}</div>`;
     } else {
       list.innerHTML = persons.map((p, i) => `
         <div class="pitem">
@@ -674,7 +843,7 @@
             <span class="pname">${esc(p.name)}</span>
             <span class="pkg">${p.kg} kg</span>
           </div>
-          <button class="btn-del" onclick="removePerson(${i})" aria-label="${esc(p.name)} entfernen" title="Entfernen">×</button>
+          <button class="btn-del" onclick="removePerson(${i})" aria-label="${esc(t('removePerson', { name: p.name }))}" title="${esc(t('removeTitle'))}">×</button>
         </div>
       `).join('');
     }
@@ -687,7 +856,7 @@
     if (!showMatrix) return;
 
     /* Build table */
-    const t = document.getElementById('mtable');
+    const t2 = document.getElementById('mtable');
     let h = '';
 
     // Column headers
@@ -713,7 +882,7 @@
     });
 
     h += '</tbody>';
-    t.innerHTML = h;
+    t2.innerHTML = h;
 
     renderSummary();
   }
@@ -738,14 +907,14 @@
 
     const groupLine = (label, list) => `
       <div class="summary-group-line">
-        <strong>${label}:</strong> ${list.length ? list.map(p => esc(p.name)).join(', ') : '<em>niemand</em>'}
+        <strong>${label}:</strong> ${list.length ? list.map(p => esc(p.name)).join(', ') : `<em>${t('nobody')}</em>`}
       </div>
     `;
 
     const groupsBlock = `
       <div class="summary-groups">
-        ${groupLine('Kann alle sichern', canBelayAll)}
-        ${groupLine('Kann mit allen vorsteigen', canClimbWithAll)}
+        ${groupLine(t('canBelayAll'), canBelayAll)}
+        ${groupLine(t('canClimbWithAll'), canClimbWithAll)}
       </div>
     `;
 
@@ -754,32 +923,22 @@
     const heavy  = sorted[sorted.length - 1];
 
     if (light === heavy || light.kg === heavy.kg) {
-      el.innerHTML = groupsBlock + '<div class="summary-line">Alle Personen wiegen gleich viel — gegenseitiges Sichern ist in beide Richtungen unbedenklich.</div>';
+      el.innerHTML = groupsBlock + `<div class="summary-line">${t('equalWeight')}</div>`;
       return;
     }
 
     const diff = heavy.kg - light.kg;
     const ratingReverse = classify(light.kg, heavy.kg);
 
-    const VERDICT = {
-      ok:     `<span class="rating-ok">problemlos</span> — der Unterschied von ${diff} kg liegt im grünen Bereich`,
-      warn:   `<span class="rating-warn">grenzwertig</span> — der Unterschied von ${diff} kg ist knapp über der Empfehlung`,
-      crit:   `<span class="rating-crit">kritisch</span> — der Unterschied von ${diff} kg überschreitet die Empfehlung deutlich`,
-      danger: `<span class="rating-danger">nicht empfohlen</span> — der Unterschied von ${diff} kg ist zu groß`,
-    };
+    const verdictHtml = `<span class="rating-${ratingReverse}">${t('verdict_' + ratingReverse + '_label')}</span> — ${t('verdict_' + ratingReverse + '_detail', { diff })}`;
 
     const canReverse = ratingReverse === 'ok';
+    const lightLineKey = canReverse ? 'summaryLightCanBelay' : 'summaryLightCannotBelay';
 
     el.innerHTML = `
       ${groupsBlock}
-      <div class="summary-line">
-        <strong>${esc(heavy.name)}</strong> (${heavy.kg} kg) kann <strong>${esc(light.name)}</strong> (${light.kg} kg) sichern,
-        da ${esc(heavy.name)} ${diff} kg schwerer ist.
-      </div>
-      <div class="summary-line">
-        <strong>${esc(light.name)}</strong> (${light.kg} kg) kann <strong>${esc(heavy.name)}</strong> (${heavy.kg} kg)
-        ${canReverse ? 'sichern' : 'nicht ohne Bremsassistenten sichern'} — ${VERDICT[ratingReverse]}.
-      </div>
+      <div class="summary-line">${t('summaryHeavyCanBelay', { heavy: esc(heavy.name), light: esc(light.name), heavyKg: heavy.kg, lightKg: light.kg, diff })}</div>
+      <div class="summary-line">${t(lightLineKey, { light: esc(light.name), heavy: esc(heavy.name), lightKg: light.kg, heavyKg: heavy.kg, verdict: verdictHtml })}</div>
     `;
   }
 
@@ -789,6 +948,10 @@
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  lang = detectLang();
+  document.documentElement.lang = lang;
+  document.title = t('pageTitle');
+  applyStaticTranslations();
   render();
 </script>
 </body>
